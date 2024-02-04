@@ -1,0 +1,147 @@
+101001/channel C02: query gateway
+101003: obtain Outh
+101003/channel C02: add Device
+101004: query regions server
+101005: query app version update
+101006: query latest privacy
+
+102001/channel C02: register push
+102002/channel C02: config Params
+102007: query houses
+102008: query room server
+102009: create Room List
+
+103001: create station
+103002: update name and room
+103004: create device
+103005: update device
+103010: Set composite alarm parameters (station) / set device info
+103011: Query composite alarm request (station)
+103020: create station (smoke-wifi)
+103030: query OTA version
+
+104001: Query historical message request
+104003: sort Room
+104006: Query historical message requests by month
+104007: Query historical message request
+104008: Query History Month
+104009: Query CO PPM List
+104010: Query CO PPM Details
+104011: Query temperature and humidity log request
+104012: Test Chart Query Temperature and Humidity Log Verification Request
+
+105002: Query keyboard password list?
+105003: create code
+105004: change code / change name
+105005: delete code
+105006: query smart code
+105007: add smart code to server
+105008: modify smart code server
+105009: to server delete pwd
+
+106001: invite user
+106002: edit user
+106003: query user invite
+106004: accept user invite
+106005: delete user
+106007: delete share permissions
+
+107002: get user details
+
+108003: set device info / set notifications
+108003: Set composite alarm parameters (device)
+108003: Set RF carbon sensing notification parameters
+108004: Query composite alarm request (device)
+
+109101: Submit content
+
+110001: Get Google Pin Account list
+110002: add Pin Account
+110003: update Pin Account
+110004: delete Pin Account
+
+120003: Get Push Voice Switch
+120004: set Alarm Sound
+120005: get Alarm Sound
+
+130002: create Automation
+130003: update automation info
+130005: Automated reporting
+
+301001: receive custom data
+
+
+401001: Create Station
+402001: create device
+402002: create device
+404002: set task list
+404003: delete Task List
+404011: set Export Data
+
+405001: query group
+405002: create group
+405003: change group name
+405004: change group info
+405005: bind group
+405006: delete group
+405007: notaddgroup
+
+405101: create schedule
+405102: change schedule name
+405103: change schedule
+405104: delete schedule
+405105: query schedule list
+405106: query schedule
+
+406001: change night mode
+406002: query mode
+
+407001: add key code
+407002: change key code
+407003: delete key code
+407004: Query List
+407005: change Keycode name
+
+407101: create schedule
+407102: change schedule
+407103: delete schedule
+407104: query schedule list
+407105: change name
+
+
+409001: Query the second generation base station online status request
+409002: Query with a lot of parameters( house, device, room )
+409003: Query system configuration request
+409101: create Device
+
+501001: get security list / query service list info
+502001: set base info
+502002: query verification code info
+502003: create police address info
+502004: create device select info
+502006: create emergency contacts info
+502008: create alarm delay info
+
+503001: unsubscribe service
+
+504002: stop dispatch info
+504005: Alarm emergency dispatch
+504006: Cancel emergency dispatch
+504008: Emergency dispatch details
+504009: create immunity info
+
+505001: query history info
+
+506001: query service trial state
+
+C20101: createIpc
+C20103: updateIpcInfo
+C20201: Query User Info
+C20302: set Ipc Notifications
+
+
+C40101: service list info
+C40103: Subscribe Service Info
+C40106: Subscribe Cancel info
+C40201: queryFreeTrialStatus
+C40202: Free Trial Pay
