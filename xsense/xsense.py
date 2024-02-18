@@ -1,56 +1,13 @@
-from pprint import pprint
-
-import json
 import requests
-import base64
-import hmac
-import hashlib
 import boto3
 from botocore.exceptions import ClientError
 from pycognito import AWSSRP
 
+from xsense.aws_signer import AWSSigner
+from xsense.base import XSenseBase
 
-class XSense:
-    API = 'https://api.x-sense-iot.com'
-    VERSION = "v1.17.2_20240115"
-    APPCODE = "1172"
-    CLIENTYPE = "2"
 
-    username = None
-    clientid = None
-    clientsecret = None
-    userpool = None
-    region = None
-
-    access_token = None
-    id_token = None
-    refresh_token = None
-
-    _lastres = None
-
-    def _decode_secret(self, encoded):
-        value = base64.b64decode(encoded)
-        return value[4:-1]
-
-    def _calculate_mac(self, data):
-        values = []
-        if data:
-            for key in data:
-                value = data[key]
-                if isinstance(value, list):
-                    if value and isinstance(value[0], str):
-                        values.extend(value)
-                    else:
-                        values.append(json.dumps(value))
-                elif isinstance(value, dict):
-                    values.append(json.dumps(value, separators=(',', ':')))
-                else:
-                    values.append(str(value))
-
-        concatenated_string = ''.join(values)
-        mac_data = concatenated_string.encode('utf-8') + self.clientsecret
-        return hashlib.md5(mac_data).hexdigest()
-
+class XSense(XSenseBase):
     def api_call(self, code, unauth=False, **kwargs):
         data = {
             **kwargs
@@ -83,17 +40,22 @@ class XSense:
             raise RuntimeError(f"Request for code {code} failed with error {data['reCode']} {data.get('reMsg')}")
         return data['reData']
 
-    def generate_hash(self, data):
-        return base64.b64encode(
-            hmac.new(
-                self.clientsecret,
-                bytes(data, 'utf-8'),
-                digestmod=hashlib.sha256
-            ).digest()
-        ).decode()
+    def get_thing(self, name):
+        headers = {
+            'Content-Type': 'application/x-amz-json-1.0',
+            'User-Agent': 'aws-sdk-iOS/2.26.5 iOS/17.3 nl_NL',
+            'X-Amz-Security-Token': self.session_token
+        }
 
-    def init(self):
-        self.get_client_info()
+        host = f'{self.region}.x-sense-iot.com'
+        host = 'eu-central-1.x-sense-iot.com'
+        uri = f'/things/{name}/shadow?name=2nd_info_00000002'
+        url = f'https://{host}{uri}'
+
+        signed = self.signer.sign_headers('GET', url, headers, None)
+        headers |= signed
+        res = requests.get(url, headers=headers)
+        return res
 
     def login(self, username, password):
         self.username = username
@@ -136,8 +98,15 @@ class XSense:
             self.access_token = response['AuthenticationResult']['AccessToken']
             self.id_token = response['AuthenticationResult']['IdToken']
             self.refresh_token = response['AuthenticationResult']['RefreshToken']
+
+            self.get_access_tokens()
+            self.signer = AWSSigner(self.access_key, self.secret_access_key, 'eu-central-1', self.session_token)
+
         except ClientError as e:
             raise RuntimeError(f'Cannot login, respond_to_auth failed: {e}') from e
+
+    def init(self):
+        self.get_client_info()
 
     def get_client_info(self):
         data = self.api_call("101001", unauth=True)
@@ -146,7 +115,12 @@ class XSense:
         self.region = data['cgtRegion']
         self.userpool = data['userPoolId']
 
-        # pprint(data)
+    def get_access_tokens(self):
+        data = self.api_call("101003", userName=self.username)
+        self.access_key = data['accessKeyId']
+        self.secret_access_key = data['secretAccessKey']
+        self.session_token = data['sessionToken']
+        self.token_expiration = data['expiration']
 
     def get_houses(self):
         params = {

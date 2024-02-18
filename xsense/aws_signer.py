@@ -1,0 +1,106 @@
+import hashlib
+import datetime
+import hmac
+from typing import Dict
+from urllib.parse import parse_qsl, quote, urlencode, urlsplit
+
+
+class AWSSigner:
+    algorithm = 'AWS4-HMAC-SHA256'
+    service = 'iotdata'
+
+    def __init__(
+            self,
+            client_id: str,
+            client_secret: str,
+            region: str,
+            token: str
+    ) -> None:
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.region = region
+        self.token = token
+
+    def _sign(self, key, msg):
+        return hmac.new(key, msg.encode('utf-8'), hashlib.sha256).digest()
+
+    def get_signing_key(self, date_stamp):
+        k_date = self._sign((f'AWS4{self.client_secret}').encode('utf-8'), date_stamp)
+        # print(f'date   : {string_to_hex(k_date)}')
+        k_region = self._sign(key=k_date, msg=self.region)
+        # print(f'region : {string_to_hex(k_region)}')
+        k_service = self._sign(key=k_region, msg=self.service)
+        # print(f'service: {string_to_hex(k_service)}')
+        k_signing = self._sign(key=k_service, msg='aws4_request')
+        #print(f'result: {string_to_hex(k_signing)}')
+        return k_signing
+
+
+    def get_canonical_request(self, method, url, headers, content_hash):
+        query = parse_qsl(url.query, keep_blank_values=True)
+        canonical_query = urlencode(sorted(query), quote_via=quote)
+
+        return "\n".join([
+            method,
+            url.path,
+            canonical_query,
+            "\n".join(f"{key}:{value}" for key, value in headers),
+            "",
+            content_hash
+        ])
+
+    def get_string_to_sign(self, scope, canonical_request):
+        return "\n".join([
+            self.algorithm,
+            scope,
+            hashlib.sha256(canonical_request.encode("utf-8")).hexdigest()
+        ])
+
+    def compute_signature(self, scope, method, url, headers, content_hash, date_stamp):
+        canonical_request = self.get_canonical_request(method, url, headers, content_hash)
+        string_to_sign = self.get_string_to_sign(scope, canonical_request )
+
+        signing_key = self.get_signing_key(date_stamp)
+
+        return hmac.new(signing_key, string_to_sign.encode('utf-8'), hashlib.sha256).hexdigest()
+
+    def combine_sort_headers(self, **kwargs):
+        return sorted({k.lower(): v for k, v in kwargs.items()}.items())
+
+    def sign_headers(
+            self,
+            method: str,
+            url: str,
+            headers: Dict,
+            content: str
+    ):
+        parsed_url = urlsplit(url)
+
+        result = {'host': parsed_url.netloc}
+        t = datetime.datetime.now(datetime.timezone.utc)
+        amz_date = t.strftime('%Y%m%dT%H%M%SZ')
+        date_stamp = t.strftime('%Y%m%d')
+
+        scope = f'{date_stamp}/{self.region}/{self.service}/aws4_request'
+
+        # calculate content hash
+        if content:
+            content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+        else:
+            content_hash = hashlib.sha256(b"").hexdigest()
+
+        result['X-Amz-Date'] = amz_date
+
+        canonical_headers = self.combine_sort_headers(**headers, **result)
+
+        signature = self.compute_signature(scope, method, parsed_url, canonical_headers, content_hash, date_stamp)
+
+        signed_headers = ";".join(k for k, v in canonical_headers)
+        credential = f'{self.client_id}/{scope}'
+
+        result['Authorization'] = (f"Authorization: {self.algorithm} "
+                                   f"Credential={credential}, "
+                                   f"SignedHeaders={signed_headers}, "
+                                   f"Signature={signature}")
+
+        return result
