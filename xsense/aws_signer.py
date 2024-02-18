@@ -46,19 +46,21 @@ class AWSSigner:
             canonical_query,
             "\n".join(f"{key}:{value}" for key, value in headers),
             "",
+            ";".join(k for k,v in headers),
             content_hash
         ])
 
-    def get_string_to_sign(self, scope, canonical_request):
+    def get_string_to_sign(self, scope, amz_date, canonical_request):
         return "\n".join([
             self.algorithm,
+            amz_date,
             scope,
             hashlib.sha256(canonical_request.encode("utf-8")).hexdigest()
         ])
 
-    def compute_signature(self, scope, method, url, headers, content_hash, date_stamp):
+    def compute_signature(self, scope, method, url, headers, content_hash, date_stamp, amz_date):
         canonical_request = self.get_canonical_request(method, url, headers, content_hash)
-        string_to_sign = self.get_string_to_sign(scope, canonical_request )
+        string_to_sign = self.get_string_to_sign(scope, amz_date, canonical_request)
 
         signing_key = self.get_signing_key(date_stamp)
 
@@ -93,12 +95,12 @@ class AWSSigner:
 
         canonical_headers = self.combine_sort_headers(**headers, **result)
 
-        signature = self.compute_signature(scope, method, parsed_url, canonical_headers, content_hash, date_stamp)
+        signature = self.compute_signature(scope, method, parsed_url, canonical_headers, content_hash, date_stamp, amz_date)
 
         signed_headers = ";".join(k for k, v in canonical_headers)
         credential = f'{self.client_id}/{scope}'
 
-        result['Authorization'] = (f"Authorization: {self.algorithm} "
+        result['Authorization'] = (f"{self.algorithm} "
                                    f"Credential={credential}, "
                                    f"SignedHeaders={signed_headers}, "
                                    f"Signature={signature}")
