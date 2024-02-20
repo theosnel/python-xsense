@@ -124,6 +124,7 @@
 
 503001: unsubscribe service
 
+504001: Housing service inquiry / Inquire about housing services (security plan) request
 504002: stop dispatch info
 504005: Alarm emergency dispatch
 504006: Cancel emergency dispatch

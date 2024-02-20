@@ -1,17 +1,15 @@
-from pprint import pprint
 from xsense import XSense
 
-
-username = ''
-passwd = ''
+from xsense.utils import dump_environment, get_credentials
 
 api = XSense()
 api.init()
-api.login(username, passwd)
 
-houses = api.get_houses()
-pprint(houses)
+username, password = get_credentials()
+api.login(username, password)
+api.load_all()
+for _, h in api.houses.items():
+    for _, s in h.stations.items():
+        api.get_state(s)
 
-for h in houses:
-    rooms = api.get_rooms(h['houseId'])
-    pprint(rooms)
+dump_environment(api)

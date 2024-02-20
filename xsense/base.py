@@ -2,6 +2,9 @@ import base64
 import hashlib
 import hmac
 import json
+from typing import Dict
+
+from xsense.house import House
 
 
 class XSenseBase:
@@ -27,6 +30,9 @@ class XSenseBase:
     signer = None
 
     _lastres = None
+
+    def __init__(self):
+        self.houses: Dict[str, House] = {}
 
     def _decode_secret(self, encoded):
         value = base64.b64decode(encoded)
