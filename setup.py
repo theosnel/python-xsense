@@ -19,7 +19,13 @@ setup(
         'botocore',
         'pycognito'
     ],
-
+    extras_require={
+        'test': [
+            'pytest',
+            'pytest-cov',
+            'pytest-asyncio',
+        ]
+    },
     keywords=['python', 'xsense'],
     classifiers=[
         "Development Status :: 3 - Alpha",
