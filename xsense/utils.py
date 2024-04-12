@@ -38,3 +38,4 @@ def dump_environment(env: XSenseBase):
                 print(f'  battery : {d.bat_info}')
                 print(f'  online  : {"yes" if d.online else "no"}')
                 print(f'  rf-level: {d.rf_level}')
+                print(f'  values  : {d.values}')

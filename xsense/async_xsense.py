@@ -8,8 +8,8 @@ from pycognito import AWSSRP
 from xsense.aws_signer import AWSSigner
 from xsense.base import XSenseBase
 from xsense.house import House
+from xsense.mapping import map_values
 from xsense.station import Station
-
 
 
 class AsyncXSense(XSenseBase):
@@ -188,3 +188,4 @@ class AsyncXSense(XSenseBase):
                 i['rfLevel'],
                 i['status']
             )
+            dev.set_values(map_values(i['type'], i['status']))
