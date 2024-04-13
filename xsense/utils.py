@@ -34,8 +34,11 @@ def dump_environment(env: XSenseBase):
         for s_id, s in h.stations.items():
             print(f'# {s.name} ({s_id})')
             for d_id, d in s.devices.items():
-                print(f'{d.name} ({d.device_type}):')
-                print(f'  battery : {d.bat_info}')
-                print(f'  online  : {"yes" if d.online else "no"}')
-                print(f'  rf-level: {d.rf_level}')
-                print(f'  values  : {d.values}')
+                dump_device(d)
+
+
+def dump_device(d):
+    print(f'{d.name} ({d.device_type}):')
+    print(f'  serial  : {d.sn}')
+    print(f'  online  : {"yes" if d.online else "no"}')
+    print(f'  values  : {d.status}')

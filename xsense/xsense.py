@@ -171,11 +171,4 @@ class XSense(XSenseBase):
 
         for sn, i in res['state']['reported']['devs'].items():
             dev = station.get_device_by_sn(sn)
-            dev.set_status(
-                i['batInfo'],
-                i['online'],
-                i['rfLevel'],
-                i['status']
-            )
-
-            dev.set_values(map_values(i['type'], i['status']))
+            dev.set_status(i)

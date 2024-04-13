@@ -1,9 +1,10 @@
+from xsense.mapping import map_values
+
+
 class Device:
-    bat_info = None
     online = None
-    rf_level = None
-    status = None
-    _values = None
+    type = None
+    _status = None
 
     def __init__(
             self,
@@ -21,20 +22,15 @@ class Device:
         self.device_type = device_type
         self.room_id = room_id
 
-        self._values = {}
+        self._status = {}
 
-    def set_status(self, bat_info, online, rf_level, status):
-        self.bat_info = bat_info
-        self.online = online
-        self.rf_level = rf_level
-        self.status = status
-
-    def set_value(self, key, value):
-        self._values[key] = value
-
-    def set_values(self, values):
-        self._values = values
+    def set_status(self, values: dict):
+        data = values.copy()
+        self.online = values.pop('online', False)
+        self.type = values.pop('type', '')
+        data |= data.pop('status', {})
+        self._status = map_values(self.type, data)
 
     @property
-    def data(self):
-        return self._values
+    def status(self):
+        return self._status
