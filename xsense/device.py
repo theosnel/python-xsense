@@ -4,7 +4,7 @@ from xsense.mapping import map_values
 class Device:
     online = None
     type = None
-    _status = None
+    _data = None
 
     def __init__(
             self,
@@ -22,15 +22,15 @@ class Device:
         self.device_type = device_type
         self.room_id = room_id
 
-        self._status = {}
+        self._data = {}
 
-    def set_status(self, values: dict):
+    def set_data(self, values: dict):
         data = values.copy()
         self.online = values.pop('online', False)
         self.type = values.pop('type', '')
         data |= data.pop('status', {})
-        self._status = map_values(self.type, data)
+        self._data = map_values(self.type, data)
 
     @property
-    def status(self):
-        return self._status
+    def data(self):
+        return self._data

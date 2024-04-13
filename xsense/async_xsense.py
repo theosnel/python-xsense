@@ -182,4 +182,4 @@ class AsyncXSense(XSenseBase):
 
         for sn, i in res['state']['reported']['devs'].items():
             dev = station.get_device_by_sn(sn)
-            dev.set_status(i)
+            dev.set_data(i)

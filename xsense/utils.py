@@ -41,4 +41,4 @@ def dump_device(d):
     print(f'{d.name} ({d.device_type}):')
     print(f'  serial  : {d.sn}')
     print(f'  online  : {"yes" if d.online else "no"}')
-    print(f'  values  : {d.status}')
+    print(f'  values  : {d.data}')
