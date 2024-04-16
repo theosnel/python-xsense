@@ -1,14 +1,12 @@
 import asyncio
-import aiohttp
+from datetime import datetime
+import json
 
-import boto3
-from botocore.exceptions import ClientError
-from pycognito import AWSSRP
+import aiohttp
 
 from xsense.aws_signer import AWSSigner
 from xsense.base import XSenseBase
 from xsense.house import House
-from xsense.mapping import map_values
 from xsense.station import Station
 
 
@@ -19,9 +17,11 @@ class AsyncXSense(XSenseBase):
         }
 
         if unauth:
-           headers = None
-           mac='abcdefg'
+            headers = None
+            mac = 'abcdefg'
         else:
+            if self._access_token_expiring():
+                await self.refresh_token()
             headers = {'Authorization': self.access_token}
             mac = self._calculate_mac(data)
 
@@ -46,19 +46,11 @@ class AsyncXSense(XSenseBase):
                 return data['reData']
 
     async def get_thing(self, station: Station, page: str):
-        headers = {
-            'Content-Type': 'application/x-amz-json-1.0',
-            'User-Agent': 'aws-sdk-iOS/2.26.5 iOS/17.3 nl_NL',
-            'X-Amz-Security-Token': self.session_token
-        }
+        if self._aws_token_expiring():
+            await self.load_aws()
 
-        host = f'{station.house.mqtt_region}.x-sense-iot.com'
-        uri = f'/things/SBS50{station.sn}/shadow?name={page}'
+        url, headers = self._thing_request(station, page)
 
-        url = f'https://{host}{uri}'
-
-        signed = self.signer.sign_headers('GET', url, station.house.mqtt_region, headers, None)
-        headers |= signed
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 url,
@@ -67,62 +59,27 @@ class AsyncXSense(XSenseBase):
                 self._lastres = response
                 return await response.json()
 
-    def sync_login(self, username, password):
-        self.username = username
-        session = boto3.Session()
-        cognito = session.client('cognito-idp', region_name=self.region)
-
-        aws_srp = AWSSRP(
-            username=username,
-            password=password,
-            pool_id=self.userpool,
-            client_id=self.clientid,
-            client=cognito
-        )
-
-        auth_params = aws_srp.get_auth_params()
-        auth_params['SECRET_HASH'] = self.generate_hash(username + self.clientid)
-
-        try:
-            response = cognito.initiate_auth(
-                ClientId=self.clientid,
-                AuthFlow='USER_SRP_AUTH',
-                AuthParameters=auth_params
-            )
-        except ClientError as e:
-            raise RuntimeError(f'Cannot login, initiate_auth failed: {e}') from e
-
-        userid = response['ChallengeParameters']['USERNAME']
-
-        challenge_response = aws_srp.process_challenge(response["ChallengeParameters"], auth_params)
-
-        challenge_response['SECRET_HASH'] = self.generate_hash(userid + self.clientid)
-
-        try:
-            response = cognito.respond_to_auth_challenge(
-                ClientId=self.clientid,
-                ChallengeName='PASSWORD_VERIFIER',
-                ChallengeResponses=challenge_response
-            )
-
-            self.access_token = response['AuthenticationResult']['AccessToken']
-            self.id_token = response['AuthenticationResult']['IdToken']
-            self.refresh_token = response['AuthenticationResult']['RefreshToken']
-
-        except ClientError as e:
-            raise RuntimeError(f'Cannot login, respond_to_auth failed: {e}') from e
-
     async def login(self, username, password):
         await asyncio.get_event_loop().run_in_executor(None, self.sync_login, username, password)
-        await self.load_env()
+        await self.load_aws()
+
+    async def refresh(self):
+        url, data, headers = self._refresh_request()
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url, json=data, headers=headers
+            ) as response:
+                self._lastres = response
+                text = await response.text()
+                data = json.loads(text)
+                self._parse_refresh_result(data.get('AuthenticationResult', {}))
 
     async def init(self):
         await self.get_client_info()
 
-    async def load_env(self):
-        await self.get_access_tokens()
-
-        self.signer = AWSSigner(self.access_key, self.secret_access_key, self.session_token)
+    async def load_aws(self):
+        await self.get_aws_tokens()
+        self.signer = AWSSigner(self.aws_access_key, self.aws_secret_access_key, self.aws_session_token)
 
     async def load_all(self):
         result = {}
@@ -150,12 +107,12 @@ class AsyncXSense(XSenseBase):
         self.region = data['cgtRegion']
         self.userpool = data['userPoolId']
 
-    async def get_access_tokens(self):
+    async def get_aws_tokens(self):
         data = await self.api_call("101003", userName=self.username)
-        self.access_key = data['accessKeyId']
-        self.secret_access_key = data['secretAccessKey']
-        self.session_token = data['sessionToken']
-        self.token_expiration = data['expiration']
+        self.aws_access_key = data['accessKeyId']
+        self.aws_secret_access_key = data['secretAccessKey']
+        self.aws_session_token = data['sessionToken']
+        self.aws_access_expiry = datetime.strptime(data['expiration'], "%Y-%m-%d %H:%M:%S%z")
 
     async def get_houses(self):
         params = {
@@ -184,9 +141,4 @@ class AsyncXSense(XSenseBase):
 
     async def get_state(self, station: Station):
         res = await self.get_thing(station, '2nd_mainpage')
-        reported = res['state']['reported']
-        if 'wifiRSSI' in reported:
-            station.data['wifiRSSI'] = reported['wifiRSSI']
-        for sn, i in reported['devs'].items():
-            dev = station.get_device_by_sn(sn)
-            dev.set_data(i)
+        self._parse_get_state(station, res['state']['reported'])

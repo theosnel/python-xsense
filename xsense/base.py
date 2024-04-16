@@ -2,9 +2,15 @@ import base64
 import hashlib
 import hmac
 import json
+from datetime import datetime, timedelta, timezone
 from typing import Dict
 
-from xsense.house import House
+import boto3
+from botocore.exceptions import ClientError
+from pycognito import AWSSRP
+
+from .station import Station
+from .house import House
 
 
 class XSenseBase:
@@ -22,10 +28,12 @@ class XSenseBase:
     access_token = None
     id_token = None
     refresh_token = None
-    access_key = None
-    secret_access_key = None
-    session_token = None
-    token_expiration = None
+    access_token_expiry = None
+
+    aws_access_key = None
+    aws_secret_access_key = None
+    aws_session_token = None
+    aws_access_expiry = None
 
     signer = None
 
@@ -33,6 +41,65 @@ class XSenseBase:
 
     def __init__(self):
         self.houses: Dict[str, House] = {}
+
+    def sync_login(self, username, password):
+        self.username = username
+        session = boto3.Session()
+        cognito = session.client('cognito-idp', region_name=self.region)
+
+        aws_srp = AWSSRP(
+            username=username,
+            password=password,
+            pool_id=self.userpool,
+            client_id=self.clientid,
+            client=cognito
+        )
+
+        auth_params = aws_srp.get_auth_params()
+        auth_params['SECRET_HASH'] = self.generate_hash(username + self.clientid)
+
+        try:
+            response = cognito.initiate_auth(
+                ClientId=self.clientid,
+                AuthFlow='USER_SRP_AUTH',
+                AuthParameters=auth_params
+            )
+        except ClientError as e:
+            raise RuntimeError(f'Cannot login, initiate_auth failed: {e}') from e
+
+        userid = response['ChallengeParameters']['USERNAME']
+
+        challenge_response = aws_srp.process_challenge(response["ChallengeParameters"], auth_params)
+
+        challenge_response['SECRET_HASH'] = self.generate_hash(userid + self.clientid)
+
+        try:
+            response = cognito.respond_to_auth_challenge(
+                ClientId=self.clientid,
+                ChallengeName='PASSWORD_VERIFIER',
+                ChallengeResponses=challenge_response
+            )
+
+            auth_result = response['AuthenticationResult']
+            self.access_token = auth_result['AccessToken']
+            self.id_token = auth_result['IdToken']
+            self.refresh_token =auth_result['RefreshToken']
+            self.access_token_expiry = datetime.now(timezone.utc) + timedelta(seconds=auth_result['ExpiresIn'])
+
+        except ClientError as e:
+            raise RuntimeError(f'Cannot login, respond_to_auth failed: {e}') from e
+
+    def restore_session(self, username, access_token, refresh_token, id_token):
+        self.username = username
+        self.access_token = access_token
+        self.refresh_token = refresh_token
+        self.id_token = id_token
+
+    def _access_token_expiring(self):
+        return datetime.now(timezone.utc) > self.access_token_expiry - timedelta(seconds=60)
+
+    def _aws_token_expiring(self):
+        return datetime.now(timezone.utc) > self.aws_access_expiry - timedelta(seconds=60)
 
     def _decode_secret(self, encoded):
         value = base64.b64decode(encoded)
@@ -65,3 +132,55 @@ class XSenseBase:
                 digestmod=hashlib.sha256
             ).digest()
         ).decode()
+
+    def _refresh_request(self):
+        url = f'https://cognito-idp.{self.region}.amazonaws.com'
+        data = {
+            "AuthFlow": "REFRESH_TOKEN_AUTH",
+            "AuthParameters": {
+                "REFRESH_TOKEN": self.refresh_token,
+                "SECRET_HASH": self.clientsecret.decode()
+            },
+            "ClientId": self.clientid,
+            "UserContextData": {}
+        }
+        t = datetime.now(timezone.utc)
+        amz_date = t.strftime('%Y%m%dT%H%M%SZ')
+        headers = {
+            'x-amz-date': amz_date,
+            'x-amz-target': 'AWSCognitoIdentityProviderService.InitiateAuth',
+            'content-type': 'application/x-amz-json-1.1'
+        }
+        return url, data, headers
+
+    def _thing_request(self, station: Station, page: str):
+        headers = {
+            'Content-Type': 'application/x-amz-json-1.0',
+            'User-Agent': 'aws-sdk-iOS/2.26.5 iOS/17.3 nl_NL',
+            'X-Amz-Security-Token': self.aws_session_token
+        }
+
+        host = f'{station.house.mqtt_region}.x-sense-iot.com'
+        uri = f'/things/SBS50{station.sn}/shadow?name={page}'
+
+        url = f'https://{host}{uri}'
+
+        signed = self.signer.sign_headers('GET', url, station.house.mqtt_region, headers, None)
+        headers |= signed
+
+        return url, headers
+
+    def _parse_refresh_result(self, data: Dict):
+        if 'AccessToken' in data:
+            self.access_token = data['AccessToken']
+        if 'IdToken' in data:
+            self.id_token = data['IdToken']
+        if 'ExpiresIn' in data:
+            self.access_token_expiry = datetime.now(timezone.utc) + timedelta(seconds=data['ExpiresIn'])
+
+    def _parse_get_state(self, station: Station, data: Dict):
+        if 'wifiRSSI' in data:
+            station.data['wifiRSSI'] = data['wifiRSSI']
+        for sn, i in data['devs'].items():
+            dev = station.get_device_by_sn(sn)
+            dev.set_data(i)
