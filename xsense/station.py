@@ -1,32 +1,27 @@
 from typing import List, Dict
 
 from xsense.device import Device
+from xsense.entity import Entity
 
 
-class Station:
-    devices: Dict[str, Dict[str, Device]]
+class Station(Entity):
+    devices: Dict[str, Device]
     device_order: List[str]
     device_by_sn: Dict[str, str]
 
     def __init__(
             self,
             parent,
-            station_id,
-            station_name,
-            station_sn,
-            category,
-            sw,
-            safe_mode,
-            online
+            **kwargs
     ):
+        super().__init__(**kwargs)
         self.house = parent
-        self.station_id = station_id
-        self.name = station_name
-        self.sn = station_sn
-        self.category = category
-        self.sw = sw
-        self.safe_mode = safe_mode
-        self.online = online
+        self.safe_mode = kwargs.get('safeMode')
+        self.entity_id = kwargs.get('stationId')
+        self.name = kwargs.get('stationName')
+        self.sn = kwargs.get('stationSn')
+        self.online = kwargs.get('onLine')
+        self.type = kwargs.get('category')
 
     def set_devices(self, data):
         self.device_order = data.get('deviceSort')
@@ -35,11 +30,7 @@ class Station:
         for i in data.get('devices'):
             d = Device(
                 self,
-                i['deviceId'],
-                i['deviceName'],
-                i['deviceSn'],
-                i['deviceType'],
-                i['roomId']
+                **i
             )
             result[i['deviceId']] = d
             result_sn[i['deviceSn']] = i['deviceId']

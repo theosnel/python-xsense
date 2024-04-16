@@ -35,13 +35,7 @@ class House:
         for i in data.get('stations', []):
             s = Station(
                 self,
-                i['stationId'],
-                i['stationName'],
-                i['stationSn'],
-                i['category'],
-                i['sbs50Sw'],
-                i['safeMode'],
-                i['onLine']
+                **i
             )
             s.set_devices(i)
 
