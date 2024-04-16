@@ -177,9 +177,16 @@ class AsyncXSense(XSenseBase):
         }
         return await self.api_call("103007", **params)
 
+    async def get_station_state(self, station: Station):
+        res = await self.get_thing(station, f'2nd_info_{station.sn}')
+
+        station.set_data(res['state']['reported'])
+
     async def get_state(self, station: Station):
         res = await self.get_thing(station, '2nd_mainpage')
-
-        for sn, i in res['state']['reported']['devs'].items():
+        reported = res['state']['reported']
+        if 'wifiRSSI' in reported:
+            station.data['wifiRSSI'] = reported['wifiRSSI']
+        for sn, i in reported['devs'].items():
             dev = station.get_device_by_sn(sn)
             dev.set_data(i)

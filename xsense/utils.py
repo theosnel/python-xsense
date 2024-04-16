@@ -16,11 +16,12 @@ def get_credentials():
     with contextlib.suppress(FileNotFoundError):
         with open('.env', 'r') as file:
             for line in file:
-                key, value = line.strip().split('=')
-                if key.lower() == 'username':
-                    username = value
-                elif key.lower() == 'password':
-                    password = value
+                with contextlib.suppress(ValueError):
+                    key, value = line.strip().split('=')
+                    if key.lower() == 'username':
+                        username = value
+                    elif key.lower() == 'password':
+                        password = value
 
     if username and password:
         return username, password
@@ -32,13 +33,14 @@ def dump_environment(env: XSenseBase):
     for h_id, h in env.houses.items():
         print(f'----[ {h.name} ({h_id}) ]-----------------')
         for s_id, s in h.stations.items():
+            dump_device(s)
             print(f'# {s.name} ({s_id})')
             for d_id, d in s.devices.items():
                 dump_device(d)
 
 
 def dump_device(d):
-    print(f'{d.name} ({d.device_type}):')
+    print(f'{d.name} ({d.type}):')
     print(f'  serial  : {d.sn}')
     print(f'  online  : {"yes" if d.online else "no"}')
     print(f'  values  : {d.data}')
