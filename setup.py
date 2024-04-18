@@ -22,7 +22,7 @@ setup(
         'botocore',
         'pycognito'
     ],
-    extra_require={'async': ['aiohttp']},
+    extras_require={'async': ['aiohttp']},
 
     keywords=['python', 'xsense'],
     classifiers=[
