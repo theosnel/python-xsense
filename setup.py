@@ -7,7 +7,7 @@ with open('README.rst', 'r') as fd:
     LONG_DESCRIPTION = fd.read()
 
 setup(
-    name='pyhton-xsense',
+    name='python-xsense',
     version=VERSION,
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
