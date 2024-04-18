@@ -18,6 +18,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'requests',
+        'aiohttp',
         'boto3',
         'botocore',
         'pycognito'
