@@ -1,13 +1,13 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 DESCRIPTION = 'XSense Python Module'
 
-with open('README.md', 'r') as fd:
+with open('README.rst', 'r') as fd:
     LONG_DESCRIPTION = fd.read()
 
 setup(
-    name='pyhton-xsense',
+    name='python-xsense',
     version=VERSION,
     description=DESCRIPTION,
     long_description=LONG_DESCRIPTION,
@@ -22,6 +22,7 @@ setup(
         'botocore',
         'pycognito'
     ],
+    extra_require={'async': ['aiohttp']},
 
     keywords=['python', 'xsense'],
     classifiers=[
