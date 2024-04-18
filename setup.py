@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 VERSION = '0.0.1'
 DESCRIPTION = 'XSense Python Module'
 
-with open('README.md', 'r') as fd:
+with open('README.rst', 'r') as fd:
     LONG_DESCRIPTION = fd.read()
 
 setup(
