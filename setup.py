@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.0.2'
+VERSION = '0.0.3'
 DESCRIPTION = 'XSense Python Module'
 
 with open('README.rst', 'r') as fd:
@@ -22,7 +22,7 @@ setup(
         'botocore',
         'pycognito'
     ],
-    extra_require={'async': ['aiohttp']},
+    extras_require={'async': ['aiohttp']},
 
     keywords=['python', 'xsense'],
     classifiers=[
