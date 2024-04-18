@@ -18,11 +18,11 @@ setup(
     packages=find_packages(),
     install_requires=[
         'requests',
-        'aiohttp',
         'boto3',
         'botocore',
         'pycognito'
     ],
+    extra_require={'async': ['aiohttp']},
 
     keywords=['python', 'xsense'],
     classifiers=[
