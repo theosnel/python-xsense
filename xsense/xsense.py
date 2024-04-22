@@ -19,7 +19,7 @@ class XSense(XSenseBase):
             mac = 'abcdefg'
         else:
             if self._access_token_expiring():
-                self.refresh_token()
+                self.refresh()
             headers = {'Authorization': self.access_token}
             mac = self._calculate_mac(data)
 
