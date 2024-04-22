@@ -15,8 +15,8 @@ from .house import House
 
 class XSenseBase:
     API = 'https://api.x-sense-iot.com'
-    VERSION = "v1.17.2_20240115"
-    APPCODE = "1172"
+    VERSION = "v1.18.0_20240311"
+    APPCODE = "1180"
     CLIENTYPE = "1"
 
     username = None

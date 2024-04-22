@@ -21,7 +21,7 @@ class AsyncXSense(XSenseBase):
             mac = 'abcdefg'
         else:
             if self._access_token_expiring():
-                await self.refresh_token()
+                await self.refresh()
             headers = {'Authorization': self.access_token}
             mac = self._calculate_mac(data)
 
