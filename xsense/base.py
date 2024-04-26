@@ -98,6 +98,8 @@ class XSenseBase:
         self.access_token = access_token
         self.refresh_token = refresh_token
         self.id_token = id_token
+        self.access_token_expiry = datetime.now(timezone.utc)
+        self.aws_access_expiry = datetime.now(timezone.utc)
 
     def _access_token_expiring(self):
         return datetime.now(timezone.utc) > self.access_token_expiry - timedelta(seconds=60)
