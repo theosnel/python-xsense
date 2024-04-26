@@ -4,6 +4,7 @@ import requests
 
 from xsense.aws_signer import AWSSigner
 from xsense.base import XSenseBase
+from xsense.exceptions import APIFailure, SessionExpired
 from xsense.house import House
 from xsense.station import Station
 
@@ -38,8 +39,19 @@ class XSense(XSenseBase):
         self._lastres = res
 
         data = res.json()
+        if res.status_code >= 400:
+            message = data.get('message') or 'unknown error'
+            raise APIFailure(f'API failure: {res.status_code}/{message}')
+
+        if 'reCode' not in data:
+            raise APIFailure('API failure: Cannot understand response')
+
         if data['reCode'] != 200:
-            raise RuntimeError(f"Request for code {code} failed with error {data['reCode']} {data.get('reMsg')}")
+            errCode = data.get('errCode', 0)
+            if errCode in ('10000008', '10000020'):
+                raise SessionExpired(data.get('reMsg'))
+            raise APIFailure(f"Request for code {code} failed with error {errCode}/{data['reCode']} {data.get('reMsg')}")
+
         return data['reData']
 
     def get_thing(self, station: Station, page: str):
@@ -64,6 +76,10 @@ class XSense(XSenseBase):
         )
         self._lastres = res
         data = res.json()
+
+        if res.status_code == 400:
+            raise SessionExpired(data.get('message', 'token refresh failed'))
+
         self._parse_refresh_result(data.get('AuthenticationResult', {}))
 
     def init(self):
@@ -129,8 +145,15 @@ class XSense(XSenseBase):
     def get_station_state(self, station: Station):
         res = self.get_thing(station, f'2nd_info_{station.sn}')
 
-        station.set_data(res['state']['reported'])
+        if 'reported' in res.get('state', {}):
+            station.set_data(res['state']['reported'])
+        else:
+            raise APIFailure(f'Unable to retrieve station data: {self._lastres.status_code}/{self._lastres.text}')
 
     def get_state(self, station: Station):
         res = self.get_thing(station, '2nd_mainpage')
-        self._parse_get_state(station, res['state']['reported'])
+
+        if 'reported' in res.get('state', {}):
+            self._parse_get_state(station, res['state']['reported'])
+        else:
+            raise APIFailure(f'Unable to retrieve station data: {self._lastres.status_code}/{self._lastres.text}')
