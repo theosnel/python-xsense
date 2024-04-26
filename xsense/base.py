@@ -177,6 +177,8 @@ class XSenseBase:
         return url, headers
 
     def _parse_refresh_result(self, data: Dict):
+        if 'RefreshToken' in data:
+            self.refresh_token = data['RefreshToken']
         if 'AccessToken' in data:
             self.access_token = data['AccessToken']
         if 'IdToken' in data:
