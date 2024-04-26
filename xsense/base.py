@@ -9,6 +9,7 @@ import boto3
 from botocore.exceptions import ClientError
 from pycognito import AWSSRP
 
+from .exceptions import AuthFailed
 from .station import Station
 from .house import House
 
@@ -42,6 +43,9 @@ class XSenseBase:
     def __init__(self):
         self.houses: Dict[str, House] = {}
 
+    def _parse_client_error(self, e: ClientError):
+        return e.response.get('Error', {}).get('Message') or str(e)
+
     def sync_login(self, username, password):
         self.username = username
         session = boto3.Session()
@@ -65,7 +69,7 @@ class XSenseBase:
                 AuthParameters=auth_params
             )
         except ClientError as e:
-            raise RuntimeError(f'Cannot login, initiate_auth failed: {e}') from e
+            raise AuthFailed(self._parse_client_error(e)) from e
 
         userid = response['ChallengeParameters']['USERNAME']
 
@@ -87,7 +91,7 @@ class XSenseBase:
             self.access_token_expiry = datetime.now(timezone.utc) + timedelta(seconds=auth_result['ExpiresIn'])
 
         except ClientError as e:
-            raise RuntimeError(f'Cannot login, respond_to_auth failed: {e}') from e
+            raise AuthFailed(self._parse_client_error(e)) from e
 
     def restore_session(self, username, access_token, refresh_token, id_token):
         self.username = username
