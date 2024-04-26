@@ -16,7 +16,7 @@ class Entity:
     def set_data(self, values: dict):
         data = values.copy()
         if 'online' in values:
-            self.online = values.pop('online')
+            self.online = values.pop('online') != '0'
         data |= data.pop('status', {})
         self._data.update(map_values(self.type, data))
 
