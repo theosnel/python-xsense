@@ -170,7 +170,7 @@ class AsyncXSense(XSenseBase):
     async def get_house_state(self, house: House):
         res = await self.get_house(house, 'mainpage')
         if self._lastres.status == 404:
-            raise NotFoundError(await self._lastres.text)
+            raise NotFoundError(await self._lastres.text())
 
         if 'reported' in res.get('state', {}):
             self._parse_get_house_state(house, res['state']['reported'])
