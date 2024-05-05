@@ -17,7 +17,13 @@ class Entity:
         data = values.copy()
         if 'online' in values:
             self.online = values.pop('online') != '0'
+        if values.get('onlineTime'):
+            self.online = True
         data |= data.pop('status', {})
+        # sofware versions are reported differently per device
+        if 'swMain' in data:
+            data['wifi_sw'] = data.get('sw')
+            data['sw'] = data.pop('swMain', None)
         self._data.update(map_values(self.type, data))
 
     @property

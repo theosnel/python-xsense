@@ -1,6 +1,9 @@
 import typing
 
 property_mapper = {
+    '*': {
+        'wifiRssi': 'wifiRSSI'
+    },
     'STH51': {
         'a': 'alarmStatus',
         'b': 'temperature',
@@ -35,6 +38,7 @@ def map_type(k: str, value: typing.Any):
 
 def map_values(device_type: str, data: typing.Dict):
     mapping = property_mapper[device_type] if device_type in property_mapper else {}
+    mapping.update(property_mapper.get('*', {}))
 
     return {
         mapping.get(k, k): map_type(mapping.get(k, k), v)

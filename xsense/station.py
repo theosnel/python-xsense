@@ -20,7 +20,7 @@ class Station(Entity):
         self.entity_id = kwargs.get('stationId')
         self.name = kwargs.get('stationName')
         self.sn = kwargs.get('stationSn')
-        self.online = kwargs.get('onLine')
+        self.online = kwargs.get('onLine', True)
         self.type = kwargs.get('category')
 
     def set_devices(self, data):

@@ -159,6 +159,23 @@ class XSenseBase:
         }
         return url, data, headers
 
+    def _house_request(self, house: House, page: str):
+        headers = {
+            'Content-Type': 'application/x-amz-json-1.0',
+            'User-Agent': 'aws-sdk-iOS/2.26.5 iOS/17.3 nl_NL',
+            'X-Amz-Security-Token': self.aws_session_token
+        }
+
+        host = f'{house.mqtt_region}.x-sense-iot.com'
+        uri = f'/things/{house.house_id}/shadow?name={page}'
+
+        url = f'https://{host}{uri}'
+
+        signed = self.signer.sign_headers('GET', url, house.mqtt_region, headers, None)
+        headers |= signed
+
+        return url, headers
+
     def _thing_request(self, station: Station, page: str):
         headers = {
             'Content-Type': 'application/x-amz-json-1.0',
@@ -167,7 +184,7 @@ class XSenseBase:
         }
 
         host = f'{station.house.mqtt_region}.x-sense-iot.com'
-        uri = f'/things/SBS50{station.sn}/shadow?name={page}'
+        uri = f'/things/{station.type}{station.sn}/shadow?name={page}'
 
         url = f'https://{host}{uri}'
 
@@ -192,3 +209,8 @@ class XSenseBase:
         for sn, i in data['devs'].items():
             dev = station.get_device_by_sn(sn)
             dev.set_data(i)
+
+    def _parse_get_house_state(self, house: House, data: Dict):
+        for sn, i in data.items():
+            if station := house.get_station_by_sn(sn):
+                station.set_data(i)

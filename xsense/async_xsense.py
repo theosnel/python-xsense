@@ -6,7 +6,7 @@ import aiohttp
 
 from xsense.aws_signer import AWSSigner
 from xsense.base import XSenseBase
-from xsense.exceptions import SessionExpired, APIFailure
+from xsense.exceptions import SessionExpired, APIFailure, NotFoundError
 from xsense.house import House
 from xsense.station import Station
 
@@ -58,6 +58,20 @@ class AsyncXSense(XSenseBase):
                         f"Request for code {code} failed with error {errCode}/{data['reCode']} {data.get('reMsg')}"
                     )
                 return data['reData']
+
+    async def get_house(self, house: House, page: str):
+        if self._aws_token_expiring():
+            await self.load_aws()
+
+        url, headers = self._house_request(house, page)
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                url,
+                headers=headers
+            ) as response:
+                self._lastres = response
+                return await response.json()
 
     async def get_thing(self, station: Station, page: str):
         if self._aws_token_expiring():
@@ -114,8 +128,9 @@ class AsyncXSense(XSenseBase):
             if rooms := await self.get_rooms(h.house_id):
                 h.set_rooms(rooms)
 
-            if station := await self.get_stations(h.house_id):
-                h.set_stations(station)
+            if stations := await self.get_stations(h.house_id):
+                h.set_stations(stations)
+
         self.houses = result
 
     async def get_client_info(self):
@@ -152,18 +167,37 @@ class AsyncXSense(XSenseBase):
         }
         return await self.api_call("103007", **params)
 
+    async def get_house_state(self, house: House):
+        res = await self.get_house(house, 'mainpage')
+        if self._lastres.status == 404:
+            raise NotFoundError(await self._lastres.text)
+
+        if 'reported' in res.get('state', {}):
+            self._parse_get_house_state(house, res['state']['reported'])
+        else:
+            text = await self._lastres.text()
+            raise APIFailure(f'Unable to retrieve house data: {self._lastres.status}/{text}')
+
     async def get_station_state(self, station: Station):
-        res = await self.get_thing(station, f'2nd_info_{station.sn}')
+        if station.type == 'SBS50':
+            res = await self.get_thing(station, f'2nd_info_{station.sn}')
+        else:
+            res = await self.get_thing(station, f'info_{station.sn}')
 
         if 'reported' in res.get('state', {}):
             station.set_data(res['state']['reported'])
         else:
-            raise APIFailure(f'Unable to retrieve station data: {self._lastres.status}/{self._lastres.text()}')
+            text = await self._lastres.text()
+            raise APIFailure(f'Unable to retrieve station data: {self._lastres.status}/{text}')
 
     async def get_state(self, station: Station):
+        if not station.devices:
+            return
+
         res = await self.get_thing(station, '2nd_mainpage')
 
         if 'reported' in res.get('state', {}):
             self._parse_get_state(station, res['state']['reported'])
         else:
-            raise APIFailure(f'Unable to retrieve station data: {self._lastres.status}/{self._lastres.text()}')
+            text = await self._lastres.text()
+            raise APIFailure(f'Unable to retrieve station data: {self._lastres.status}/{text}')

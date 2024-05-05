@@ -4,7 +4,7 @@ import requests
 
 from xsense.aws_signer import AWSSigner
 from xsense.base import XSenseBase
-from xsense.exceptions import APIFailure, SessionExpired
+from xsense.exceptions import APIFailure, SessionExpired, NotFoundError
 from xsense.house import House
 from xsense.station import Station
 
@@ -54,13 +54,23 @@ class XSense(XSenseBase):
 
         return data['reData']
 
+    def get_house(self, house: House, page: str):
+        if self._aws_token_expiring():
+            self.load_aws()
+
+        url, headers = self._house_request(house, page)
+        res = requests.get(url, headers=headers)
+        self._lastres = res
+        return res.json()
+
     def get_thing(self, station: Station, page: str):
         if self._aws_token_expiring():
             self.load_aws()
 
         url, headers = self._thing_request(station, page)
-
-        return requests.get(url, headers=headers).json()
+        res = requests.get(url, headers=headers)
+        self._lastres = res
+        return res.json()
 
     def login(self, username, password):
         self.sync_login(username, password)
@@ -142,8 +152,21 @@ class XSense(XSenseBase):
         }
         return self.api_call("103007", **params)
 
+    def get_house_state(self, house: House):
+        res = self.get_house(house, 'mainpage')
+        if self._lastres.status_code == 404:
+            raise NotFoundError(self._lastres.text)
+
+        if 'reported' in res.get('state', {}):
+            self._parse_get_house_state(house, res['state']['reported'])
+        else:
+            raise APIFailure(f'Unable to retrieve station data: {self._lastres.status_code}/{self._lastres.text}')
+
     def get_station_state(self, station: Station):
-        res = self.get_thing(station, f'2nd_info_{station.sn}')
+        if station.type == 'SBS50':
+            res = self.get_thing(station, f'2nd_info_{station.sn}')
+        else:
+            res = self.get_thing(station, f'info_{station.sn}')
 
         if 'reported' in res.get('state', {}):
             station.set_data(res['state']['reported'])
@@ -151,6 +174,9 @@ class XSense(XSenseBase):
             raise APIFailure(f'Unable to retrieve station data: {self._lastres.status_code}/{self._lastres.text}')
 
     def get_state(self, station: Station):
+        if not station.devices:
+            return
+
         res = self.get_thing(station, '2nd_mainpage')
 
         if 'reported' in res.get('state', {}):
