@@ -11,7 +11,9 @@ async def run(username: str, password: str):
     await api.load_all()
 
     for _, h in api.houses.items():
+        await api.get_house_state(h)
         for _, s in h.stations.items():
+            await api.get_station_state(s)
             await api.get_state(s)
 
     dump_environment(api)

@@ -4,11 +4,11 @@ from xsense.station import Station
 
 
 class House:
-    rooms = Dict[str, Dict[str, str]]
-    room_order = List[str]
+    rooms: Dict[str, Dict[str, str]] = None
+    room_order: List[str] = None
 
-    stations = List[Dict[str, str]]
-    station_order = List[str]
+    stations: Dict[str, Station] = None
+    station_order: List[str] = None
 
     def __init__(
             self,
@@ -42,3 +42,6 @@ class House:
             stations[i['stationId']] = s
 
         self.stations = stations
+
+    def get_station_by_sn(self, sn: str):
+        return next((i for _, i in self.stations.items() if i.sn == sn), None)

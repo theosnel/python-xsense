@@ -12,3 +12,7 @@ class AuthFailed(XSenseError):
 
 class APIFailure(XSenseError):
     pass
+
+
+class NotFoundError(XSenseError):
+    pass
