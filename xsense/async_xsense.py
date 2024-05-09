@@ -168,21 +168,29 @@ class AsyncXSense(XSenseBase):
         return await self.api_call("103007", **params)
 
     async def get_house_state(self, house: House):
-        res = await self.get_house(house, 'mainpage')
-        if self._lastres.status == 404:
-            raise NotFoundError(await self._lastres.text())
+        for page in ('mainpage', '2nd_mainpage'):
+            res = await self.get_house(house, page)
 
-        if 'reported' in res.get('state', {}):
-            self._parse_get_house_state(house, res['state']['reported'])
-        else:
-            text = await self._lastres.text()
-            raise APIFailure(f'Unable to retrieve house data: {self._lastres.status}/{text}')
+            if self._lastres.status == 404:
+                continue
+
+            if 'reported' in res.get('state', {}):
+                self._parse_get_house_state(house, res['state']['reported'])
+            else:
+                text = await self._lastres.text()
+                raise APIFailure(f'Unable to retrieve house data: {self._lastres.status}/{text}')
 
     async def get_station_state(self, station: Station):
-        if station.type == 'SBS50':
-            res = await self.get_thing(station, f'2nd_info_{station.sn}')
-        else:
+        res = None
+
+        if station.type not in ('SBS50', 'SC07-WX', 'XC04-WX'):
             res = await self.get_thing(station, f'info_{station.sn}')
+
+        if res is None or self._lastres.status == 404:
+            res = await self.get_thing(station, f'2nd_info_{station.sn}')
+
+        if self._lastres.status == 404:
+            return
 
         if 'reported' in res.get('state', {}):
             station.set_data(res['state']['reported'])
