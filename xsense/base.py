@@ -183,8 +183,12 @@ class XSenseBase:
             'X-Amz-Security-Token': self.aws_session_token
         }
 
+        typename = station.type
+        if typename in ('XC04-WX', 'SC07-WX'):
+            typename += '-'
+
         host = f'{station.house.mqtt_region}.x-sense-iot.com'
-        uri = f'/things/{station.type}{station.sn}/shadow?name={page}'
+        uri = f'/things/{typename}{station.sn}/shadow?name={page}'
 
         url = f'https://{host}{uri}'
 
