@@ -169,10 +169,10 @@ class XSense(XSenseBase):
         if station.type not in ('SBS50', 'SC07-WX', 'XC04-WX'):
             res = self.get_thing(station, f'info_{station.sn}')
 
-        if res is None or self._lastres.status == 404:
+        if res is None or self._lastres.status_code == 404:
             res = self.get_thing(station, f'2nd_info_{station.sn}')
 
-        if self._lastres.status == 404:
+        if self._lastres.status_code == 404:
             return
 
         if 'reported' in res.get('state', {}):
