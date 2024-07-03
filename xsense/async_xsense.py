@@ -117,6 +117,7 @@ class AsyncXSense(XSenseBase):
         result = {}
         for i in await self.get_houses():
             h = House(
+                self.signer,
                 i['houseId'],
                 i['houseName'],
                 i['houseRegion'],

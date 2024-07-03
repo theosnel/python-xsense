@@ -103,6 +103,7 @@ class XSense(XSenseBase):
         result = {}
         for i in self.get_houses():
             h = House(
+                self.signer,
                 i['houseId'],
                 i['houseName'],
                 i['houseRegion'],

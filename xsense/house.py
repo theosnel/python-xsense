@@ -1,6 +1,8 @@
 from typing import List, Dict
 
+from xsense.aws_signer import AWSSigner
 from xsense.station import Station
+from xsense.mqtt_helper import MQTTHelper
 
 
 class House:
@@ -12,6 +14,7 @@ class House:
 
     def __init__(
             self,
+            signer: AWSSigner,
             house_id: str,
             name: str,
             region: str,
@@ -23,6 +26,8 @@ class House:
         self.region = region
         self.mqtt_region = mqtt_region
         self.mqtt_server = mqtt_server
+
+        self.mqtt = MQTTHelper(signer, self)
 
     def set_rooms(self, data):
         self.rooms = data.get('houseRooms')
