@@ -29,3 +29,7 @@ class Entity:
     @property
     def data(self):
         return self._data
+
+    @property
+    def shadow_name(self):
+        return f'{self.type}{self.sn}'
