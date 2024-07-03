@@ -20,6 +20,7 @@ class XSenseBase:
     APPCODE = "1180"
     CLIENTYPE = "1"
 
+    userid = None
     username = None
     clientid = None
     clientsecret = None
@@ -71,11 +72,11 @@ class XSenseBase:
         except ClientError as e:
             raise AuthFailed(self._parse_client_error(e)) from e
 
-        userid = response['ChallengeParameters']['USERNAME']
+        self.userid = response['ChallengeParameters']['USERNAME']
 
         challenge_response = aws_srp.process_challenge(response["ChallengeParameters"], auth_params)
 
-        challenge_response['SECRET_HASH'] = self.generate_hash(userid + self.clientid)
+        challenge_response['SECRET_HASH'] = self.generate_hash(self.userid + self.clientid)
 
         try:
             response = cognito.respond_to_auth_challenge(
@@ -207,10 +208,10 @@ class XSenseBase:
         if 'ExpiresIn' in data:
             self.access_token_expiry = datetime.now(timezone.utc) + timedelta(seconds=data['ExpiresIn'])
 
-    def _parse_get_state(self, station: Station, data: Dict):
+    def parse_get_state(self, station: Station, data: Dict):
         if 'wifiRSSI' in data:
             station.data['wifiRSSI'] = data['wifiRSSI']
-        for sn, i in data['devs'].items():
+        for sn, i in data.get('devs', {}).items():
             dev = station.get_device_by_sn(sn)
             dev.set_data(i)
 
