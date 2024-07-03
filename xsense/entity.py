@@ -22,7 +22,7 @@ class Entity:
         data |= data.pop('status', {})
         # sofware versions are reported differently per device
         if 'swMain' in data:
-            data['wifi_sw'] = data.get('sw')
+            data['network_sw'] = data.get('sw')
             data['sw'] = data.pop('swMain', None)
         self._data.update(map_values(self.type, data))
 
