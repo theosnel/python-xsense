@@ -1,6 +1,7 @@
 import hashlib
 import datetime
 import hmac
+import urllib
 from typing import Dict
 from urllib.parse import parse_qsl, quote, urlencode, urlsplit
 
@@ -32,7 +33,6 @@ class AWSSigner:
         k_signing = self._sign(key=k_service, msg='aws4_request')
         #print(f'result: {string_to_hex(k_signing)}')
         return k_signing
-
 
     def get_canonical_request(self, method, url, headers, content_hash):
         query = parse_qsl(url.query, keep_blank_values=True)
@@ -107,3 +107,41 @@ class AWSSigner:
                                    f"Signature={signature}")
 
         return result
+
+    def presign_url(self, url, region):
+        t = datetime.datetime.now(datetime.timezone.utc)
+        date_time = t.strftime('%Y%m%dT%H%M%SZ')
+        date_stamp = t.strftime('%Y%m%d')
+        credential_scope = f'{date_stamp}/{region}/{self.service}/aws4_request'
+        credential = f'{self.client_id}/{credential_scope}'
+        parsed_url = urlsplit(url)
+
+        canonical_querystring = "&".join(f'{k}={v}' for k,v in (
+            ('X-Amz-Algorithm', self.algorithm),
+            ('X-Amz-Credential', urllib.parse.quote_plus(credential)),
+            ('X-Amz-Date', date_time),
+            ('X-Amz-SignedHeaders', 'host'),
+        ))
+
+        content_hash = hashlib.sha256(b"").hexdigest()
+        # content_hash = 'UNSIGNED-PAYLOAD'
+
+        canonical_headers = f"host:{parsed_url.netloc}\n"
+
+        canonical_request = 'GET' + '\n' + parsed_url.path + '\n' + canonical_querystring + '\n' + canonical_headers + '\nhost\n' + content_hash
+        string_to_sign = (self.algorithm + '\n' + date_time + '\n' + credential_scope + '\n' + hashlib.sha256(
+            canonical_request.encode()).hexdigest())
+        signing_key = self.get_signing_key(date_stamp, region)
+
+        signature = hmac.new(signing_key, string_to_sign.encode('utf-8'), hashlib.sha256).hexdigest()
+        canonical_querystring += (
+            f'&X-Amz-Security-Token={urllib.parse.quote(self.token)}'
+        )
+        canonical_querystring += f'&X-Amz-Signature={signature}'
+
+        return (
+                parsed_url.scheme + '://' +
+                parsed_url.netloc + 
+                parsed_url.path +
+                '?' + canonical_querystring
+        )
