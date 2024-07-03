@@ -208,7 +208,7 @@ class XSenseBase:
         if 'ExpiresIn' in data:
             self.access_token_expiry = datetime.now(timezone.utc) + timedelta(seconds=data['ExpiresIn'])
 
-    def _parse_get_state(self, station: Station, data: Dict):
+    def parse_get_state(self, station: Station, data: Dict):
         if 'wifiRSSI' in data:
             station.data['wifiRSSI'] = data['wifiRSSI']
         for sn, i in data.get('devs', {}).items():

@@ -188,6 +188,6 @@ class XSense(XSenseBase):
         res = self.get_thing(station, '2nd_mainpage')
 
         if 'reported' in res.get('state', {}):
-            self._parse_get_state(station, res['state']['reported'])
+            self.parse_get_state(station, res['state']['reported'])
         else:
             raise APIFailure(f'Unable to retrieve station data: {self._lastres.status_code}/{self._lastres.text}')

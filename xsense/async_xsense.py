@@ -206,7 +206,7 @@ class AsyncXSense(XSenseBase):
         res = await self.get_thing(station, '2nd_mainpage')
 
         if 'reported' in res.get('state', {}):
-            self._parse_get_state(station, res['state']['reported'])
+            self.parse_get_state(station, res['state']['reported'])
         else:
             text = await self._lastres.text()
             raise APIFailure(f'Unable to retrieve station data: {self._lastres.status}/{text}')
