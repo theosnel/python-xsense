@@ -212,8 +212,8 @@ class XSenseBase:
         if 'wifiRSSI' in data:
             station.data['wifiRSSI'] = data['wifiRSSI']
         for sn, i in data.get('devs', {}).items():
-            dev = station.get_device_by_sn(sn)
-            dev.set_data(i)
+            if dev := station.get_device_by_sn(sn):
+                dev.set_data(i)
 
     def _parse_get_house_state(self, house: House, data: Dict):
         for sn, i in data.items():
