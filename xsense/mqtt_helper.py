@@ -2,6 +2,8 @@
 import uuid
 import ssl
 from datetime import datetime, timedelta
+from typing import Dict
+
 from paho.mqtt import client as mqtt_client
 
 from xsense.aws_signer import AWSSigner
@@ -40,8 +42,7 @@ class MQTTHelper:
         self.house = house
 
         self.client = mqtt_client.Client(
-            client_id = str(uuid.uuid4()),
-            callback_api_version=mqtt_client.CallbackAPIVersion.VERSION2,
+            client_id=str(uuid.uuid4()),
             transport='websockets'
         )
 
@@ -51,4 +52,17 @@ class MQTTHelper:
         self.client.tls_set_context(ssl_context)
 
     def prepare_connect(self):
-        self.client.ws_set_options(path=self._get_path())
+        def fix_websocket_headers(headers: Dict) -> Dict:
+            """
+            Remove port-number from Host and origin, XSense doesn't accept signing with it
+            """
+
+            if 'Host' in headers:
+                headers['Host'], _ = headers['Host'].split(':', 1)
+
+            if 'Origin' in headers:
+                headers['Origin'], _ = headers['Origin'].split(':', 1)
+
+            return headers
+
+        self.client.ws_set_options(path=self._get_path(), headers=fix_websocket_headers)
