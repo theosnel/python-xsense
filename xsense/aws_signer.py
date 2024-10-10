@@ -145,3 +145,13 @@ class AWSSigner:
                 parsed_url.path +
                 '?' + canonical_querystring
         )
+
+    def update(
+            self,
+            client_id: str,
+            client_secret: str,
+            token: str
+    ) -> None:
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.token = token

@@ -97,7 +97,10 @@ class XSense(XSenseBase):
 
     def load_aws(self):
         self.get_aws_tokens()
-        self.signer = AWSSigner(self.aws_access_key, self.aws_secret_access_key, self.aws_session_token)
+        if self.signer:
+            self.signer.update(self.aws_access_key, self.aws_secret_access_key, self.aws_session_token)
+        else:
+            self.signer = AWSSigner(self.aws_access_key, self.aws_secret_access_key, self.aws_session_token)
 
     def load_all(self):
         result = {}
