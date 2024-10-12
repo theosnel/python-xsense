@@ -1,12 +1,15 @@
 import asyncio
 from datetime import datetime
 import json
+from typing import Dict
 
 import aiohttp
 
 from xsense.aws_signer import AWSSigner
 from xsense.base import XSenseBase
-from xsense.exceptions import SessionExpired, APIFailure, NotFoundError
+from xsense.entity import Entity
+from xsense.entity_map import entities
+from xsense.exceptions import SessionExpired, APIFailure, NotFoundError, XSenseError
 from xsense.house import House
 from xsense.station import Station
 
@@ -82,6 +85,21 @@ class AsyncXSense(XSenseBase):
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 url,
+                headers=headers
+            ) as response:
+                self._lastres = response
+                return await response.json()
+
+    async def do_thing(self, station: Station, page: str, data: Dict):
+        if self._aws_token_expiring():
+            await self.load_aws()
+
+        url, headers = self._thing_request(station, page, data)
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                url,
+                json=data,
                 headers=headers
             ) as response:
                 self._lastres = response
@@ -213,3 +231,39 @@ class AsyncXSense(XSenseBase):
         else:
             text = await self._lastres.text()
             raise APIFailure(f'Unable to retrieve station data: {self._lastres.status}/{text}')
+
+    async def set_state(self, entity: Entity, shadow: str, topic: str, definition: Dict):
+        station = entity.station
+        t = datetime.now()
+        timestamp = t.strftime('%Y%m%d%H%M%S')
+
+        desired = {
+            "deviceSN": entity.sn,
+            "shadow": shadow,
+            "stationSN": station.sn,
+            "time": timestamp,
+            "userId": self.userid
+        }
+        desired.update(definition.get('extra', {}))
+
+        data = {"state": {"desired": desired}}
+
+        res = await self.do_thing(station, topic, data)
+
+    async def action(self, entity: Entity, action: str):
+        entity_def = entities.get(entity.type)
+        if not entity_def:
+            raise XSenseError(f'Entity type {entity.type} is unkown, action {action} not possible')
+
+        action_def = next((a for a in entity_def.get('actions', []) if a.get('action') == action), None)
+        if not action_def:
+            raise XSenseError(f'Action {action} is not supported for entity type {entity.type}')
+
+        topic = action_def.get('topic')
+        if callable(topic):
+            topic = topic(entity)
+        await self.set_state(entity, action_def['shadow'], topic, action_def)
+
+    def has_action(self, entity: Entity, action: str):
+        entity_def = entities.get(entity.type)
+        return any(a for a in entity_def.get('actions', []) if a.get('action') == action)

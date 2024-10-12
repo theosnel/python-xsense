@@ -177,7 +177,7 @@ class XSenseBase:
 
         return url, headers
 
-    def _thing_request(self, station: Station, page: str):
+    def _thing_request(self, station: Station, page: str, data=None):
         headers = {
             'Content-Type': 'application/x-amz-json-1.0',
             'User-Agent': 'aws-sdk-iOS/2.26.5 iOS/17.3 nl_NL',
@@ -193,7 +193,8 @@ class XSenseBase:
 
         url = f'https://{host}{uri}'
 
-        signed = self.signer.sign_headers('GET', url, station.house.mqtt_region, headers, None)
+        method = 'POST' if data else 'GET'
+        signed = self.signer.sign_headers(method, url, station.house.mqtt_region, headers, data)
         headers |= signed
 
         return url, headers
