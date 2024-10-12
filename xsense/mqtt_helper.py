@@ -43,6 +43,7 @@ class MQTTHelper:
 
         self.client = mqtt_client.Client(
             client_id=str(uuid.uuid4()),
+            reconnect_on_failure=False,
             transport='websockets'
         )
 
