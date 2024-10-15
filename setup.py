@@ -20,7 +20,8 @@ setup(
         'requests',
         'boto3',
         'botocore',
-        'pycognito'
+        'pycognito',
+        'paho-mqtt',
     ],
     extras_require={'async': ['aiohttp']},
 
