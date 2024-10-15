@@ -20,7 +20,7 @@ class Entity:
         if values.get('onlineTime'):
             self.online = True
         data |= data.pop('status', {})
-        # sofware versions are reported differently per device
+        # software versions are reported differently per device
         if 'swMain' in data:
             data['network_sw'] = data.get('sw')
             data['sw'] = data.pop('swMain', None)

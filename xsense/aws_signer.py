@@ -1,6 +1,7 @@
 import hashlib
 import datetime
 import hmac
+import json
 import urllib
 from typing import Dict
 from urllib.parse import parse_qsl, quote, urlencode, urlsplit
@@ -86,6 +87,9 @@ class AWSSigner:
 
         # calculate content hash
         if content:
+            if isinstance(content, Dict):
+                content = json.dumps(content, sort_keys=True)
+
             content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
         else:
             content_hash = hashlib.sha256(b"").hexdigest()
@@ -145,3 +149,13 @@ class AWSSigner:
                 parsed_url.path +
                 '?' + canonical_querystring
         )
+
+    def update(
+            self,
+            client_id: str,
+            client_secret: str,
+            token: str
+    ) -> None:
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.token = token
