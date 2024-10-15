@@ -185,6 +185,8 @@ class XSenseBase:
         }
 
         typename = station.type
+        if typename in ['SBS10']:
+            typename = ''
         if typename in ('XC04-WX', 'SC07-WX'):
             typename += '-'
 

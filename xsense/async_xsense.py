@@ -224,7 +224,12 @@ class AsyncXSense(XSenseBase):
         if not station.devices:
             return
 
-        res = await self.get_thing(station, '2nd_mainpage')
+        res = None
+        if station.type not in ('SBS10',):
+            res = await self.get_thing(station, '2nd_mainpage')
+
+        if res is None or self._lastres.status == 404:
+                res = await self.get_thing(station, f'mainpage')
 
         if 'reported' in res.get('state', {}):
             self.parse_get_state(station, res['state']['reported'])
