@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta
+from typing import Dict
 
 import requests
 
 from xsense.aws_signer import AWSSigner
 from xsense.base import XSenseBase
-from xsense.exceptions import APIFailure, SessionExpired, NotFoundError
+from xsense.entity import Entity
+from xsense.entity_map import entities
+from xsense.exceptions import APIFailure, SessionExpired, NotFoundError, XSenseError
 from xsense.house import House
 from xsense.station import Station
 
@@ -69,6 +72,15 @@ class XSense(XSenseBase):
 
         url, headers = self._thing_request(station, page)
         res = requests.get(url, headers=headers)
+        self._lastres = res
+        return res.json()
+
+    def do_thing(self, station: Station, page: str, data: Dict):
+        if self._aws_token_expiring():
+            self.load_aws()
+
+        url, headers = self._thing_request(station, page, data)
+        res = requests.post(url, headers=headers, json=data)
         self._lastres = res
         return res.json()
 
@@ -188,9 +200,46 @@ class XSense(XSenseBase):
         if not station.devices:
             return
 
-        res = self.get_thing(station, '2nd_mainpage')
+        res = None
+        if station.type not in ('SBS10',):
+            res = self.get_thing(station, '2nd_mainpage')
+
+        if res is None or self._lastres.status_code == 404:
+            res = self.get_thing(station, f'mainpage')
 
         if 'reported' in res.get('state', {}):
             self.parse_get_state(station, res['state']['reported'])
         else:
             raise APIFailure(f'Unable to retrieve station data: {self._lastres.status_code}/{self._lastres.text}')
+
+    def set_state(self, entity: Entity, shadow: str, topic: str, definition: Dict):
+        station = entity.station
+        t = datetime.now()
+        timestamp = t.strftime('%Y%m%d%H%M%S')
+
+        desired = {
+            "deviceSN": entity.sn,
+            "shadow": shadow,
+            "stationSN": station.sn,
+            "time": timestamp,
+            "userId": self.userid
+        }
+        desired.update(definition.get('extra', {}))
+
+        data = {"state": {"desired": desired}}
+
+        res = self.do_thing(station, topic, data)
+
+    def action(self, entity: Entity, action: str):
+        entity_def = entities.get(entity.type)
+        if not entity_def:
+            raise XSenseError(f'Entity type {entity.type} is unkown, action {action} not possible')
+
+        action_def = next((a for a in entity_def.get('actions', []) if a.get('action') == action), None)
+        if not action_def:
+            raise XSenseError(f'Action {action} is not supported for entity type {entity.type}')
+
+        topic = action_def.get('topic')
+        if callable(topic):
+            topic = topic(entity)
+        self.set_state(entity, action_def['shadow'], topic, action_def)

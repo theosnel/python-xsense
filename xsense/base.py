@@ -9,6 +9,8 @@ import boto3
 from botocore.exceptions import ClientError
 from pycognito import AWSSRP
 
+from .entity import Entity
+from .entity_map import entities
 from .exceptions import AuthFailed
 from .station import Station
 from .house import House
@@ -222,3 +224,7 @@ class XSenseBase:
         for sn, i in data.items():
             if station := house.get_station_by_sn(sn):
                 station.set_data(i)
+
+    def has_action(self, entity: Entity, action: str):
+        entity_def = entities.get(entity.type)
+        return any(a for a in entity_def.get('actions', []) if a.get('action') == action)

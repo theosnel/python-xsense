@@ -268,7 +268,3 @@ class AsyncXSense(XSenseBase):
         if callable(topic):
             topic = topic(entity)
         await self.set_state(entity, action_def['shadow'], topic, action_def)
-
-    def has_action(self, entity: Entity, action: str):
-        entity_def = entities.get(entity.type)
-        return any(a for a in entity_def.get('actions', []) if a.get('action') == action)

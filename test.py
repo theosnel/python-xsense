@@ -23,7 +23,8 @@ for _, h in api.houses.items():
 
             for _, d in s.devices.items():
                 with suppress(NotFoundError):
-                    res = api.get_device_state(s, d)
+                    res = api.get_station_state(s)
+                    res = api.get_state(s)
 
         except APIFailure as e:
             print(f'ERROR: {e}')
