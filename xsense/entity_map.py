@@ -125,7 +125,12 @@ entities = {
             FireDrillAction()
         ]
     },
-    'XP02S-MR': {},
+    'XP02S-MR': {
+        'type': EntityType.SMOKE,
+        'actions': [
+            TestAction(shadow='app2ndSelfTest'),
+        ]
+    },
     'XS01-M': {
         'type': EntityType.SMOKE,
         'actions': [
