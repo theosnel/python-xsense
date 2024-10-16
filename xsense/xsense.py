@@ -165,8 +165,8 @@ class XSense(XSenseBase):
 
             if 'reported' in res.get('state', {}):
                 self._parse_get_house_state(house, res['state']['reported'])
-            else:
-                raise APIFailure(f'Unable to retrieve station data: {self._lastres.status_code}/{self._lastres.text}')
+            # else:
+            #     raise APIFailure(f'Unable to retrieve station data: {self._lastres.status_code}/{self._lastres.text}')
 
     def get_station_state(self, station: Station):
         res = None
