@@ -198,9 +198,9 @@ class AsyncXSense(XSenseBase):
 
             if 'reported' in res.get('state', {}):
                 self._parse_get_house_state(house, res['state']['reported'])
-            else:
-                text = await self._lastres.text()
-                raise APIFailure(f'Unable to retrieve house data: {self._lastres.status}/{text}')
+            # else:
+            #     text = await self._lastres.text()
+            #     raise APIFailure(f'Unable to retrieve house data: {self._lastres.status}/{text}')
 
     async def get_station_state(self, station: Station):
         res = None
@@ -268,7 +268,3 @@ class AsyncXSense(XSenseBase):
         if callable(topic):
             topic = topic(entity)
         await self.set_state(entity, action_def['shadow'], topic, action_def)
-
-    def has_action(self, entity: Entity, action: str):
-        entity_def = entities.get(entity.type)
-        return any(a for a in entity_def.get('actions', []) if a.get('action') == action)
