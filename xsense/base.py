@@ -63,7 +63,8 @@ class XSenseBase:
         )
 
         auth_params = aws_srp.get_auth_params()
-        auth_params['SECRET_HASH'] = self.generate_hash(username + self.clientid)
+        if self.clientsecret:
+            auth_params['SECRET_HASH'] = self.generate_hash(username + self.clientid)
 
         try:
             response = cognito.initiate_auth(
@@ -78,7 +79,8 @@ class XSenseBase:
 
         challenge_response = aws_srp.process_challenge(response["ChallengeParameters"], auth_params)
 
-        challenge_response['SECRET_HASH'] = self.generate_hash(self.userid + self.clientid)
+        if self.clientsecret:
+            challenge_response['SECRET_HASH'] = self.generate_hash(self.userid + self.clientid)
 
         try:
             response = cognito.respond_to_auth_challenge(
