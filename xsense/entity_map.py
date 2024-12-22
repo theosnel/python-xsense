@@ -7,7 +7,11 @@ class EntityType(Enum):
     BASE = "base"
     CO = "co"
     COMBI = 'combi'
+    DOOR = 'door'
+    HEAT = 'heath'
+    KEYPAD = 'keypad'
     MAILBOX = 'mailbox'
+    MOTION = 'motion'
     SMOKE = "smoke"
     TEMPERATURE = "temperature"
     WATER = "water"
@@ -62,6 +66,13 @@ entities = {
     },
     # SSC0A - Camera
     # SSC0B
+    'SC06-WX': {
+        'identifier': lambda entity: f'SC06-WX-{entity.sn}',
+        'type': EntityType.COMBI,
+        'actions': [
+            TestAction(),
+        ],
+    },
     'SC07-WX': {
         'identifier': lambda entity: f'SC07-WX-{entity.sn}',
         'type': EntityType.COMBI,
@@ -70,9 +81,14 @@ entities = {
         ]
     },
     # 'SDA51': {}, - Driveway alarm
+    'SDS0A': {
+        'type': EntityType.DOOR,
+    },
     # 'SES01': {}, - Door sensor
     # 'SKF01': {}, - Remote Control
-    # 'SKP0A': {},
+    'SKP0A': {
+        'type': EntityType.KEYPAD,
+    },
     'SMA51': {
         'type': EntityType.MAILBOX,
         'actions': [
@@ -83,6 +99,9 @@ entities = {
                 'data': {'silenceTime': '', 'setType': ''}
             },
         ],
+    },
+    'SMS0A': {
+        'type': EntityType.MOTION,
     },
     # 'SSD01': {},
     # 'SPL51': {},
@@ -102,6 +121,9 @@ entities = {
             MuteAction(shadow='appWater', topic='2nd_appwater', extra={'silencetime': '', 'setType': '0'})
         ],
     },
+    'XC0C-iR': {
+        'type': EntityType.CO,
+    },
     'XC01-M': {
         # CO RF
         'type': EntityType.CO,
@@ -117,7 +139,11 @@ entities = {
             MuteAction('1')
         ]
     },
-    'XH02-M': {},
+    'XH02-M': {
+        'type': EntityType.HEAT,
+        'actions': [
+        ]
+    },
     'XP0A-MR': {
         'type': EntityType.COMBI,
         'actions': [
@@ -138,7 +164,12 @@ entities = {
             MuteAction(),
         ],
     },
-    'XS01-WX': {},
+    'XS01-WX': {
+        'type': EntityType.SMOKE,
+        'actions': [
+            TestAction(),
+        ],
+    },
     'XS03-iWX': {
         # Smoke RF
         'type': EntityType.SMOKE,
