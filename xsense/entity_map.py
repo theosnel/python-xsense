@@ -106,6 +106,13 @@ entities = {
     # 'SSD01': {},
     # 'SPL51': {},
     # 'SSL51': {},
+    'STH0A': {
+        'type': EntityType.TEMPERATURE,
+        'actions': [
+            TestAction('thSelfTest'),
+            MuteAction('1', 'extendMute')
+        ],
+    },
     'STH51': {
         'type': EntityType.TEMPERATURE,
         'actions': [

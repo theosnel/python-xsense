@@ -4,6 +4,17 @@ property_mapper = {
     '*': {
         'wifiRssi': 'wifiRSSI'
     },
+    'STH0A': {
+        'a': 'alarmStatus',
+        'b': 'temperature',
+        'c': 'humidity',
+        'd': 'temperatureUnit',
+        'e': 'temperatureRange',
+        'f': 'humidityRange',
+        'g': 'alarmEnabled',
+        'h': 'continuedAlarm',
+        't': 'time'
+    },
     'STH51': {
         'a': 'alarmStatus',
         'b': 'temperature',
@@ -14,7 +25,7 @@ property_mapper = {
         'g': 'alarmEnabled',
         'h': 'continuedAlarm',
         't': 'time'
-    }
+    },
 }
 
 type_mapping = {
