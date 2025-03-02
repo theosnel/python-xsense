@@ -18,8 +18,8 @@ from .house import House
 
 class XSenseBase:
     API = 'https://api.x-sense-iot.com'
-    VERSION = "v1.18.0_20240311"
-    APPCODE = "1180"
+    VERSION = "v1.22.0_20240914.1"
+    APPCODE = "1220"
     CLIENTYPE = "1"
 
     userid = None
@@ -63,7 +63,8 @@ class XSenseBase:
         )
 
         auth_params = aws_srp.get_auth_params()
-        auth_params['SECRET_HASH'] = self.generate_hash(username + self.clientid)
+        if self.clientsecret:
+            auth_params['SECRET_HASH'] = self.generate_hash(username + self.clientid)
 
         try:
             response = cognito.initiate_auth(
@@ -78,7 +79,8 @@ class XSenseBase:
 
         challenge_response = aws_srp.process_challenge(response["ChallengeParameters"], auth_params)
 
-        challenge_response['SECRET_HASH'] = self.generate_hash(self.userid + self.clientid)
+        if self.clientsecret:
+            challenge_response['SECRET_HASH'] = self.generate_hash(self.userid + self.clientid)
 
         try:
             response = cognito.respond_to_auth_challenge(
@@ -226,5 +228,6 @@ class XSenseBase:
                 station.set_data(i)
 
     def has_action(self, entity: Entity, action: str):
-        entity_def = entities.get(entity.type)
-        return any(a for a in entity_def.get('actions', []) if a.get('action') == action)
+        if entity_def := entities.get(entity.type):
+            return any(a for a in entity_def.get('actions', []) if a.get('action') == action)
+        return False
