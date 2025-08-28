@@ -53,17 +53,4 @@ class MQTTHelper:
         self.client.tls_set_context(ssl_context)
 
     def prepare_connect(self):
-        def fix_websocket_headers(headers: Dict) -> Dict:
-            """
-            Remove port-number from Host and origin, XSense doesn't accept signing with it
-            """
-
-            if 'Host' in headers:
-                headers['Host'], _ = headers['Host'].split(':', 1)
-
-            if 'Origin' in headers:
-                headers['Origin'], _ = headers['Origin'].split(':', 1)
-
-            return headers
-
-        self.client.ws_set_options(path=self._get_path(), headers=fix_websocket_headers)
+        self.client.ws_set_options(path=self._get_path())

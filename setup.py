@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '0.0.15'
+VERSION = '0.0.16'
 DESCRIPTION = 'XSense Python Module'
 
 with open('README.rst', 'r') as fd:
@@ -21,7 +21,7 @@ setup(
         'boto3',
         'botocore',
         'pycognito',
-        'paho-mqtt',
+        'paho-mqtt>=2.1.0',
     ],
     extras_require={'async': ['aiohttp']},
 
