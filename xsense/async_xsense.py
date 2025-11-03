@@ -238,7 +238,7 @@ class AsyncXSense(XSenseBase):
             raise APIFailure(f'Unable to retrieve station data: {self._lastres.status}/{text}')
 
     async def set_state(self, entity: Entity, shadow: str, topic: str, definition: Dict):
-        station = entity.station
+        station = entity if isinstance(entity, Station) else entity.station
         t = datetime.now()
         timestamp = t.strftime('%Y%m%d%H%M%S')
 
