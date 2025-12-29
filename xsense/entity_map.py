@@ -8,7 +8,7 @@ class EntityType(Enum):
     CO = "co"
     COMBI = 'combi'
     DOOR = 'door'
-    HEAT = 'heath'
+    HEAT = 'heat'
     KEYPAD = 'keypad'
     MAILBOX = 'mailbox'
     MOTION = 'motion'
