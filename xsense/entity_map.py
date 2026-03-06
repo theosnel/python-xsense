@@ -165,6 +165,13 @@ entities = {
             TestAction(shadow='app2ndSelfTest'),
         ]
     },
+    'XS0B-MR': {
+        'type': EntityType.SMOKE,
+        'actions': [
+            TestAction(shadow='app2ndSelfTest'),
+            MuteAction(),
+        ],
+    },
     'XS01-M': {
         'type': EntityType.SMOKE,
         'actions': [
