@@ -113,6 +113,13 @@ entities = {
             MuteAction('1', 'extendMute')
         ],
     },
+    'STH0B': {
+        'type': EntityType.TEMPERATURE,
+        'actions': [
+            TestAction('thSelfTest'),
+            MuteAction('1', 'extendMute')
+        ],
+    },
     'STH51': {
         'type': EntityType.TEMPERATURE,
         'actions': [
