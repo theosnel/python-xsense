@@ -15,6 +15,17 @@ property_mapper = {
         'h': 'continuedAlarm',
         't': 'time'
     },
+    'STH0B': {
+        'a': 'alarmStatus',
+        'b': 'temperature',
+        'c': 'humidity',
+        'd': 'temperatureUnit',
+        'e': 'temperatureRange',
+        'f': 'humidityRange',
+        'g': 'alarmEnabled',
+        'h': 'continuedAlarm',
+        't': 'time'
+    },
     'STH51': {
         'a': 'alarmStatus',
         'b': 'temperature',
