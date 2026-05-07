@@ -73,6 +73,12 @@ entities = {
             TestAction(),
         ],
     },
+    'SC07-MR': {
+        'identifier': lambda entity: f'SC07-MR-{entity.sn}',
+        'type': EntityType.COMBI,
+        'actions': [
+        ]
+    },
     'SC07-WX': {
         'identifier': lambda entity: f'SC07-WX-{entity.sn}',
         'type': EntityType.COMBI,
