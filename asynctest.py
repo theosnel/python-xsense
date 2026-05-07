@@ -16,6 +16,9 @@ async def run(username: str, password: str):
             await api.get_station_state(s)
             await api.get_state(s)
 
+            if s.has_alarm:
+                await api.get_alarm_state(s)
+
     dump_environment(api)
 
 
