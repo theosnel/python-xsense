@@ -44,3 +44,8 @@ def dump_device(d):
     print(f'  serial  : {d.sn}')
     print(f'  online  : {"yes" if d.online else "no"}')
     print(f'  values  : {d.data}')
+
+    if hasattr(d, 'has_alarm') and d.has_alarm:
+        print(' - Alarm -')
+        # print(f'  mode    : {d.alarm_data["safeMode"]}')
+        print(f'  values  : {d.alarm_data}')

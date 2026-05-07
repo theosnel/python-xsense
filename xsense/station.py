@@ -22,6 +22,8 @@ class Station(Entity):
         self.online = kwargs.get('onLine', True)
         self.type = kwargs.get('category')
 
+        self.has_alarm = False
+        self._alarm_data = {}
         super().__init__(**kwargs)
 
     def set_devices(self, data):
@@ -42,3 +44,24 @@ class Station(Entity):
         if device_id := self.device_by_sn.get(sn):
             return self.devices.get(device_id)
         return None
+
+
+    def set_alarm_data(self, values: dict):
+        keys = [
+            'mode',
+            'who',
+            'safeMode',
+            'entryDelay',
+            'pword',
+            'deviceSn',
+            'forceArm',
+            'forceReason'
+        ]
+
+        for k in keys:
+            if v := values.get(k):
+                self._alarm_data[k] = v
+
+    @property
+    def alarm_data(self):
+        return self._alarm_data
