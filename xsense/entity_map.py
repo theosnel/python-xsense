@@ -5,6 +5,7 @@ from typing import Callable, Dict
 class EntityType(Enum):
     ALARM = 'alarm'
     BASE = "base"
+    BASESTATION = 'station'
     CO = "co"
     COMBI = 'combi'
     DOOR = 'door'
@@ -58,10 +59,10 @@ entities = {
     'SAL51': {}, # listener
     'SAL100': {}, # listener
     'SBS10': {
-        'type': EntityType.BASE,
+        'type': EntityType.BASESTATION,
     },
     'SBS50': {
-        'type': EntityType.BASE,
+        'type': EntityType.BASESTATION,
         'identifier': lambda entity: f'SBS50{entity.sn}',
     },
     # SSC0A - Camera

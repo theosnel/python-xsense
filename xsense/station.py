@@ -14,7 +14,6 @@ class Station(Entity):
             parent,
             **kwargs
     ):
-        super().__init__(**kwargs)
         self.house = parent
         self.safe_mode = kwargs.get('safeMode')
         self.entity_id = kwargs.get('stationId')
@@ -22,6 +21,8 @@ class Station(Entity):
         self.sn = kwargs.get('stationSn')
         self.online = kwargs.get('onLine', True)
         self.type = kwargs.get('category')
+
+        super().__init__(**kwargs)
 
     def set_devices(self, data):
         self.device_order = data.get('deviceSort')
