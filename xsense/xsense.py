@@ -180,6 +180,15 @@ class XSense(XSenseBase):
             # else:
             #     raise APIFailure(f'Unable to retrieve station data: {self._lastres.status_code}/{self._lastres.text}')
 
+    def get_alarm_state(self, station: Station):
+        res = self.get_thing(station, '2nd_safemode')
+
+        if self._lastres.status_code == 404:
+            return
+
+        if 'reported' in res.get('state', {}):
+            station.set_alarm_data(res['state']['reported'])
+
     def get_station_state(self, station: Station):
         res = None
         if station.type not in ('SBS50', 'SC07-WX', 'XC04-WX'):
