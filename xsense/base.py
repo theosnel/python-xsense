@@ -3,7 +3,7 @@ import hashlib
 import hmac
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Dict
+from typing import Dict, Optional
 
 import boto3
 from botocore.exceptions import ClientError
@@ -244,18 +244,51 @@ class XSenseBase:
         if volume < 0 or volume > 100:
             raise XSenseError('Volume must be between 0 and 100')
 
-    def build_config_state(self, entity: Entity, shadow: str, values: Dict):
+    def _bool_value(self, value):
+        if isinstance(value, bool):
+            return '1' if value else '0'
+        if value in (0, 1, '0', '1'):
+            return str(value)
+        raise XSenseError('Value must be a boolean or 0/1')
+
+    def _utc_timestamp(self):
+        return datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
+
+    def build_command_state(
+            self,
+            entity: Entity,
+            shadow: str,
+            values: Dict,
+            include_device: Optional[bool]=None,
+            include_time: bool=True,
+            include_user: bool=True
+    ):
         station = self._station_for_entity(entity)
+        if include_device is None:
+            include_device = not isinstance(entity, Station)
+
         desired = {
             "shadow": shadow,
             "stationSN": station.sn,
-            **values
         }
-
-        if not isinstance(entity, Station):
+        if include_device:
             desired["deviceSN"] = entity.sn
+        if include_time:
+            desired["time"] = self._utc_timestamp()
+        if include_user:
+            desired["userId"] = self.userid
 
+        desired.update(values)
         return station, {"state": {"desired": desired}}
+
+    def build_config_state(self, entity: Entity, shadow: str, values: Dict):
+        return self.build_command_state(
+            entity,
+            shadow,
+            values,
+            include_time=False,
+            include_user=False
+        )
 
     def has_action(self, entity: Entity, action: str):
         if entity_def := entities.get(entity.type):
@@ -263,19 +296,8 @@ class XSenseBase:
         return False
 
     def build_desired_state(self, entity: Entity, shadow: str, definition: Dict):
-        station = self._station_for_entity(entity)
-        t = datetime.now(timezone.utc)
-        timestamp = t.strftime('%Y%m%d%H%M%S')
-
-        desired = {
-            "shadow": shadow,
-            "stationSN": station.sn,
-            "time": timestamp,
-            "userId": self.userid
+        values = {
+            **definition.get('extra', {}),
+            **definition.get('data', {})
         }
-        if not isinstance(entity, Station):
-            desired["deviceSN"] = entity.sn
-        desired.update(definition.get('extra', {}))
-        desired.update(definition.get('data', {}))
-
-        return station, {"state": {"desired": desired}}
+        return self.build_command_state(entity, shadow, values)

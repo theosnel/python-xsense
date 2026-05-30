@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, List, Optional, Union
 
 import requests
 
@@ -226,6 +226,11 @@ class XSense(XSenseBase):
 
         return self.do_thing(station, topic, data)
 
+    def set_device_config(self, entity: Entity, **values):
+        shadow = "infoBase" if isinstance(entity, Station) else "infoDev"
+        station, data = self.build_config_state(entity, shadow, values)
+        return self.do_thing(station, f'2nd_cfg_{entity.sn}', data)
+
     def set_alarm_volume(self, entity: Entity, volume: int, alarm_tone: Optional[str]=None, mute: Optional[str]=None):
         self._validate_volume(volume)
         values = {
@@ -244,6 +249,238 @@ class XSense(XSenseBase):
         self._validate_volume(volume)
         station, data = self.build_config_state(station, "infoBase", {"voiceVol": str(volume)})
         return self.do_thing(station, f'2nd_cfg_{station.sn}', data)
+
+    def set_station_mode(self, station: Station, safe_mode: str, force_arm: Optional[str]=None):
+        values = {
+            "userParam": "source=1",
+            "source": "1",
+            "safeMode": safe_mode,
+        }
+        if force_arm is not None:
+            values["forceArm"] = force_arm
+
+        station, data = self.build_command_state(
+            station,
+            "appMode",
+            values,
+            include_device=False,
+            include_time=False
+        )
+        return self.do_thing(station, "2nd_appmode", data)
+
+    def trigger_sos(self, station: Station, sos_type: str='1'):
+        station, data = self.build_command_state(
+            station,
+            "sosDown",
+            {
+                "userParam": "source=1",
+                "sosType": sos_type,
+            },
+            include_device=False
+        )
+        return self.do_thing(station, "2nd_sosdown", data)
+
+    def cancel_sos(self, station: Station):
+        station, data = self.build_command_state(
+            station,
+            "sosDown",
+            {"sosStatus": "0"},
+            include_device=False
+        )
+        return self.do_thing(station, "sosdown", data)
+
+    def cancel_alarm(self, station: Station):
+        station, data = self.build_command_state(
+            station,
+            "alarmCancel",
+            {"cancelTime": self._utc_timestamp()},
+            include_device=False,
+            include_time=False
+        )
+        return self.do_thing(station, "alarmcancel", data)
+
+    def set_fire_drill(
+            self,
+            entity: Entity,
+            drill: Union[bool, str]=True,
+            drill_time: Optional[str]=None,
+            alarm_type: Optional[str]=None,
+            alarm_vol: Optional[str]=None,
+            alarm_tone: Optional[str]=None,
+            location: Optional[str]=None,
+            stop_reason: Optional[str]=None
+    ):
+        values = {"drill": self._bool_value(drill)}
+        optional = {
+            "drillTime": drill_time,
+            "alarmType": alarm_type,
+            "alarmVol": alarm_vol,
+            "alarmTone": alarm_tone,
+            "location": location,
+            "stopReason": stop_reason,
+        }
+        values.update({k: v for k, v in optional.items() if v is not None})
+        if not isinstance(entity, Station):
+            values["deviceType"] = entity.type
+
+        station, data = self.build_command_state(
+            entity,
+            "appFireDrill",
+            values,
+            include_device=not isinstance(entity, Station)
+        )
+        return self.do_thing(station, "2nd_firedrill", data)
+
+    def set_sos_sound(self, station: Station, sos_sound: str):
+        station, data = self.build_command_state(
+            station,
+            "sosParam",
+            {
+                "userParam": "source=1",
+                "sosSound": sos_sound,
+            },
+            include_device=False
+        )
+        return self.do_thing(station, "2nd_sosparam", data)
+
+    def activate_device(self, entity: Entity):
+        station, data = self.build_command_state(
+            entity,
+            "app2ndActivate",
+            {"activate": "1"},
+            include_device=True
+        )
+        return self.do_thing(station, "2nd_appactivate", data)
+
+    def set_install_guide_test(
+            self,
+            entity: Entity,
+            active: Union[bool, str]=True,
+            dev_type: Optional[str]=None,
+            test_time: str='180',
+            detc_sens: Optional[str]=None
+    ):
+        values = {
+            "devType": dev_type or entity.type,
+            "test": self._bool_value(active),
+            "testTime": test_time,
+        }
+        if detc_sens is not None:
+            values["detcSens"] = detc_sens
+
+        station, data = self.build_command_state(entity, "appInstallGuide", values, include_device=True)
+        return self.do_thing(station, "2nd_appinstallguide", data)
+
+    def signal_test(
+            self,
+            entity: Entity,
+            dev_type: Optional[str]=None,
+            test: Union[bool, str]=True,
+            test_time: str='5'
+    ):
+        station, data = self.build_command_state(
+            entity,
+            "signalTest",
+            {
+                "devType": dev_type or entity.type,
+                "test": self._bool_value(test),
+                "testTime": test_time,
+            },
+            include_device=True
+        )
+        return self.do_thing(station, f'2nd_signaltest_{entity.sn}', data)
+
+    def set_motion_test(self, entity: Entity, active: Union[bool, str]=True, dev_type: str='SMS01'):
+        station, data = self.build_command_state(
+            entity,
+            "testIR",
+            {
+                "devType": dev_type,
+                "testIR": self._bool_value(active),
+            },
+            include_device=True,
+            include_time=False,
+            include_user=False
+        )
+        return self.do_thing(station, "testir", data)
+
+    def set_light_power(self, entity: Entity, on: Union[bool, str]):
+        station, data = self.build_command_state(
+            entity,
+            "lampPower",
+            {
+                "userParam": "source=1",
+                "isOn": self._bool_value(on),
+                "dev": entity.sn,
+            },
+            include_device=False
+        )
+        return self.do_thing(station, "2nd_lamppower", data)
+
+    def set_light_group_power(
+            self,
+            station: Station,
+            group_id: str,
+            device_sns: List[str],
+            on: Union[bool, str],
+            timeout: str='180'
+    ):
+        station, data = self.build_command_state(
+            station,
+            "groupLampPower",
+            {
+                "userParam": "source=1",
+                "timeOut": timeout,
+                "groupId": group_id,
+                "devs": device_sns,
+                "isOn": self._bool_value(on),
+            },
+            include_device=False
+        )
+        return self.do_thing(station, "2nd_grouppower", data)
+
+    def mute_water(
+            self,
+            entity: Entity,
+            set_type: str='0',
+            silence_time: str='',
+            trigger_source: Optional[str]=None
+    ):
+        values = {
+            "setType": set_type,
+            "silenceTime": silence_time,
+        }
+        if trigger_source is not None:
+            values["triggerSource"] = trigger_source
+
+        station, data = self.build_command_state(
+            entity,
+            "appWater",
+            values,
+            include_device=True
+        )
+        return self.do_thing(station, "2nd_appwater", data)
+
+    def mute_temperature_humidity(self, entity: Entity, mute_type: str='1', sensor_type: Optional[str]=None):
+        station, data = self.build_command_state(
+            entity,
+            "extendMute",
+            {
+                "muteType": mute_type,
+                "type": sensor_type or entity.type,
+            },
+            include_device=True
+        )
+        return self.do_thing(station, "2nd_appmute", data)
+
+    def mute_driveway(self, entity: Entity, mute: Union[bool, str]=True, topic: str='2nd_driveway'):
+        station, data = self.build_command_state(
+            entity,
+            "appDriveway",
+            {"mute": self._bool_value(mute)},
+            include_device=True
+        )
+        return self.do_thing(station, topic, data)
 
     def action(self, entity: Entity, action: str):
         entity_def = entities.get(entity.type)

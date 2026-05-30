@@ -145,7 +145,7 @@ entities = {
         'actions': [
             {
                 'action': 'mute',
-                'topic': '2nd_appdriveway',
+                'topic': '2nd_driveway',
                 'shadow': 'appDriveway',
                 'data': {'mute': '1'}
             },
