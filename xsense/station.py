@@ -2,6 +2,7 @@ from typing import List, Dict
 
 from xsense.device import Device
 from xsense.entity import Entity
+from xsense.mapping import map_bool
 
 
 class Station(Entity):
@@ -19,7 +20,7 @@ class Station(Entity):
         self.entity_id = kwargs.get('stationId')
         self.name = kwargs.get('stationName')
         self.sn = kwargs.get('stationSn')
-        self.online = kwargs.get('onLine', True)
+        self.online = map_bool(kwargs.get('onLine', True))
         self.type = kwargs.get('category')
 
         self.has_alarm = False
@@ -30,7 +31,7 @@ class Station(Entity):
         self.device_order = data.get('deviceSort')
         result = {}
         result_sn = {}
-        for i in data.get('devices'):
+        for i in data.get('devices', []):
             d = Device(
                 self,
                 **i

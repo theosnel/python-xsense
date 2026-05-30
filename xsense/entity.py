@@ -1,5 +1,5 @@
 from xsense.entity_map import entities
-from xsense.mapping import map_values
+from xsense.mapping import map_bool, map_values
 
 
 class Entity:
@@ -21,7 +21,7 @@ class Entity:
     def set_data(self, values: dict):
         data = values.copy()
         if 'online' in values:
-            self.online = values.pop('online') != '0'
+            self.online = map_bool(values.pop('online'))
         if values.get('onlineTime'):
             self.online = True
         data |= data.pop('status', {})
