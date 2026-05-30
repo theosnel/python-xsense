@@ -81,9 +81,29 @@ The following requests have been identified:
 +------------+---------------------------+-----------------+
 | 102008     | Query rooms               |                 |
 +------------+---------------------------+-----------------+
+| 104001     | Query daily history       |                 |
++------------+---------------------------+-----------------+
+| 104006     | Query monthly history     |                 |
++------------+---------------------------+-----------------+
+| 104007     | Query station history     | station/device  |
++------------+---------------------------+-----------------+
+| 104008     | Query station month       | station/device  |
++------------+---------------------------+-----------------+
+| 104009     | Query device CO history   | device          |
++------------+---------------------------+-----------------+
+| 104010     | Query device CO details   | device          |
++------------+---------------------------+-----------------+
+| 104014     | Query station CO history  | station         |
++------------+---------------------------+-----------------+
+| 104015     | Query station CO details  | station         |
++------------+---------------------------+-----------------+
+| 104020     | Query STH chart history   | temp/humidity   |
++------------+---------------------------+-----------------+
 | 107002     | Get profile info          |                 |
 +------------+---------------------------+-----------------+
 | 120001     | Exception log             |                 |
++------------+---------------------------+-----------------+
+| 505001     | Query dispatch history    | security        |
 +------------+---------------------------+-----------------+
 
 
@@ -142,6 +162,93 @@ Params:
  :utctimestamp: int / 0
  :houseId: string
 
+104001: Query daily history
+---------------------------
+Params:
+ :houseId: string
+ :dayTime: string (yyyyMMdd)
+ :timeZone: string
+ :nextToken: string (optional)
+
+Response:
+ :alarms: list
+ :nextToken: string
+
+104006: Query monthly history
+-----------------------------
+Params:
+ :houseId: string
+ :hisMonth: string (yyyyMM)
+ :timeZone: string
+
+Response:
+ :history counts: list
+
+104007: Query station history
+-----------------------------
+Params:
+ :houseId: string
+ :stationId: string
+ :deviceId: string (optional)
+ :dayTime: string (yyyyMMdd)
+ :timeZone: string
+ :nextToken: string (optional)
+
+Response:
+ :alarms: list
+ :nextToken: string
+
+104008: Query station monthly history
+-------------------------------------
+Params:
+ :houseId: string
+ :stationId: string
+ :deviceId: string
+ :hisMonth: string (yyyyMM)
+ :timeZone: string
+
+Response:
+ :history counts: list
+
+104009 / 104014: Query CO PPM history list
+------------------------------------------
+104009 is used when querying a specific device. 104014 is used when querying a station.
+
+Params:
+ :stationId: string
+ :deviceId: string (104009 only)
+ :timeZone: string
+
+Response:
+ :CO PPM history days: list
+
+104010 / 104015: Query CO PPM history details
+---------------------------------------------
+104010 is used when querying a specific device. 104015 is used when querying a station.
+
+Params:
+ :houseId: string
+ :stationId: string
+ :deviceId: string (104010 only)
+ :dayTime: string (yyyyMMdd)
+ :timeZone: string
+
+Response:
+ :CO PPM readings: list
+
+104020: Query temperature/humidity chart history
+------------------------------------------------
+Params:
+ :houseId: string
+ :stationId: string
+ :lastTime: string
+ :nextToken: string (optional)
+
+Response:
+ :dataList: list
+ :lastTime: string
+ :nextToken: string
+
 
 107002: Get profile info
 ------------------------
@@ -159,6 +266,16 @@ Response:
 120001: Exception log
 ---------------------
 Looks like an API to log client errors
+
+505001: Query security dispatch history
+---------------------------------------
+Params:
+ :serverId: string
+ :nextToken: string (optional)
+
+Response:
+ :dispatch history: list
+ :nextToken: string
 
 506001: query trial state
 -------------------------
