@@ -6,13 +6,19 @@ class EntityType(Enum):
     ALARM = 'alarm'
     BASE = "base"
     BASESTATION = 'station'
+    CAMERA = 'camera'
     CO = "co"
     COMBI = 'combi'
     DOOR = 'door'
     HEAT = 'heat'
     KEYPAD = 'keypad'
+    LIGHT = 'light'
+    LISTENER = 'listener'
     MAILBOX = 'mailbox'
     MOTION = 'motion'
+    RADON = 'radon'
+    REMOTE = 'remote'
+    SMARTDROP = 'smartdrop'
     SMOKE = "smoke"
     TEMPERATURE = "temperature"
     WATER = "water"
@@ -56,8 +62,12 @@ def SATestAction(shadow = 'appSelfTest'):
 
 
 entities = {
-    'SAL51': {}, # listener
-    'SAL100': {}, # listener
+    'SAL51': {
+        'type': EntityType.LISTENER,
+    },
+    'SAL100': {
+        'type': EntityType.LISTENER,
+    },
     'SBS10': {
         'type': EntityType.BASESTATION,
     },
@@ -65,8 +75,18 @@ entities = {
         'type': EntityType.BASESTATION,
         'identifier': lambda entity: f'SBS50{entity.sn}',
     },
-    # SSC0A - Camera
-    # SSC0B
+    'SSC0A': {
+        'type': EntityType.CAMERA,
+    },
+    'SSC0B': {
+        'type': EntityType.CAMERA,
+    },
+    'SC01-MN': {
+        'type': EntityType.COMBI,
+    },
+    'SC01-MR': {
+        'type': EntityType.COMBI,
+    },
     'SC06-WX': {
         'identifier': lambda entity: f'SC06-WX-{entity.sn}',
         'type': EntityType.COMBI,
@@ -87,12 +107,33 @@ entities = {
             MuteAction('1')
         ]
     },
-    # 'SDA51': {}, - Driveway alarm
+    'SD11-MR': {
+        'type': EntityType.SMOKE,
+    },
+    'SD19-MN': {
+        'type': EntityType.SMOKE,
+    },
+    'SD19-MR': {
+        'type': EntityType.SMOKE,
+    },
+    'SDA51': {
+        'type': EntityType.ALARM,
+    },
     'SDS0A': {
         'type': EntityType.DOOR,
     },
-    # 'SES01': {}, - Door sensor
-    # 'SKF01': {}, - Remote Control
+    'SES01': {
+        'type': EntityType.DOOR,
+    },
+    'SKF01': {
+        'type': EntityType.REMOTE,
+    },
+    'SK0Z-3S': {
+        'type': EntityType.SMOKE,
+    },
+    'SKP01': {
+        'type': EntityType.KEYPAD,
+    },
     'SKP0A': {
         'type': EntityType.KEYPAD,
     },
@@ -110,9 +151,18 @@ entities = {
     'SMS0A': {
         'type': EntityType.MOTION,
     },
-    # 'SSD01': {},
-    # 'SPL51': {},
-    # 'SSL51': {},
+    'SMS01': {
+        'type': EntityType.MOTION,
+    },
+    'SPL51': {
+        'type': EntityType.LIGHT,
+    },
+    'SSD01': {
+        'type': EntityType.SMARTDROP,
+    },
+    'SSL51': {
+        'type': EntityType.LIGHT,
+    },
     'STH0A': {
         'type': EntityType.TEMPERATURE,
         'actions': [
@@ -127,6 +177,9 @@ entities = {
             MuteAction('1', 'extendMute')
         ],
     },
+    'STH0C': {
+        'type': EntityType.TEMPERATURE,
+    },
     'STH51': {
         'type': EntityType.TEMPERATURE,
         'actions': [
@@ -134,7 +187,15 @@ entities = {
             MuteAction('1', 'extendMute')
         ],
     },
-    # 'SWL51': {},
+    'SWL51': {
+        'type': EntityType.LIGHT,
+    },
+    'SWS0A': {
+        'type': EntityType.WATER,
+    },
+    'SWS0B': {
+        'type': EntityType.WATER,
+    },
     'SWS51': {
         'type': EntityType.WATER,
         'actions': [
@@ -142,7 +203,22 @@ entities = {
             MuteAction(shadow='appWater', topic='2nd_appwater', extra={'silencetime': '', 'setType': '0'})
         ],
     },
+    'CB0Z-3S': {
+        'type': EntityType.COMBI,
+    },
+    'LP/N-SA-0B': {
+        'type': EntityType.SMOKE,
+    },
+    'LP/N-SCA-0A': {
+        'type': EntityType.COMBI,
+    },
+    'XC0C-iA': {
+        'type': EntityType.CO,
+    },
     'XC0C-iR': {
+        'type': EntityType.CO,
+    },
+    'XC0M-iR': {
         'type': EntityType.CO,
     },
     'XC01-M': {
@@ -172,6 +248,9 @@ entities = {
             TestAction(shadow='app2ndSelfTest'),
             FireDrillAction()
         ]
+    },
+    'XR0A-iR': {
+        'type': EntityType.RADON,
     },
     'XP02S-MR': {
         'type': EntityType.SMOKE,
@@ -224,5 +303,29 @@ entities = {
     },
     'XPOA-IR': {
         'type': EntityType.COMBI,
+    },
+    'XP0H-MR': {
+        'type': EntityType.COMBI,
+    },
+    'XP0H-iR': {
+        'type': EntityType.COMBI,
+    },
+    'XP0J-iA': {
+        'type': EntityType.COMBI,
+    },
+    'XP0P-MR': {
+        'type': EntityType.COMBI,
+    },
+    'XS0B-iR': {
+        'type': EntityType.SMOKE,
+    },
+    'XS0E-iR': {
+        'type': EntityType.SMOKE,
+    },
+    'XS0F-PMA': {
+        'type': EntityType.SMOKE,
+    },
+    'XS0R-iA': {
+        'type': EntityType.SMOKE,
     },
 }
