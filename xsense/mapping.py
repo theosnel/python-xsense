@@ -1,5 +1,12 @@
 import typing
 
+
+def map_bool(value):
+    if isinstance(value, bool):
+        return value
+    return value in (1, '1')
+
+
 property_mapper = {
     '*': {
         'wifiRssi': 'wifiRSSI'
@@ -42,13 +49,15 @@ property_mapper = {
 type_mapping = {
     'batInfo': int,
     'rfLevel': int,
-    'alarmStatus': lambda x: x == '1',
-    'alarmEnabled': lambda x: x == '1',
-    'muteStatus': lambda x: x == '1',
-    'continuedAlarm': lambda x: x == '1',
+    'alarmStatus': map_bool,
+    'alarmEnabled': map_bool,
+    'muteStatus': map_bool,
+    'continuedAlarm': map_bool,
     'coPpm': int,
     'coLevel': int,
-    'isLifeEnd': lambda x: x == '1',
+    'isLifeEnd': map_bool,
+    'isOpen': map_bool,
+    'activate': map_bool,
     'temperature': float,
     'humidity': float
 }
