@@ -203,6 +203,26 @@ entities = {
     'XS03-iWX': {
         # Smoke RF
         'type': EntityType.SMOKE,
+        'actions': [
+            TestAction(),
+        ],
     },
-    'XS03-WX': {}
+    'XS03-WX': {
+        'type': EntityType.SMOKE,
+    },
+    'XS0D-MR': {
+        'type': EntityType.SMOKE,
+    },
+    'XS0D-MR61': {
+        'type': EntityType.SMOKE,
+    },
+    'XC0C-MR': {
+        'type': EntityType.CO,
+    },
+    'XP0A-iR': {
+        'type': EntityType.COMBI,
+    },
+    'XPOA-IR': {
+        'type': EntityType.COMBI,
+    },
 }
