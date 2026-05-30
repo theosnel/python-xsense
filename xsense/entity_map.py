@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional, Union
 
 
 class EntityType(Enum):
@@ -24,7 +24,12 @@ class EntityType(Enum):
     WATER = "water"
 
 
-def MuteAction(shadow: str = 'appMute', topic: str|None|Callable = '2nd_appmute', extra: Dict|None=None):
+def MuteAction(
+        shadow: str = 'appMute',
+        topic: Union[str, Callable, None] = '2nd_appmute',
+        extra: Optional[Dict]=None,
+        mute_type: Optional[str]=None
+):
     data = {
         'action': 'mute',
         'topic': topic,
@@ -32,6 +37,8 @@ def MuteAction(shadow: str = 'appMute', topic: str|None|Callable = '2nd_appmute'
     }
     if extra:
         data['extra'] = extra
+    if mute_type is not None:
+        data.setdefault('extra', {})['muteType'] = mute_type
 
     return data
 
@@ -48,7 +55,8 @@ def FireDrillAction():
     return {
         'action': 'firedrill',
         'topic': '2nd_firedrill',
-        'shadow': 'appFireDrill'
+        'shadow': 'appFireDrill',
+        'data': {'drill': '1'}
     }
 
 
@@ -64,9 +72,15 @@ def SATestAction(shadow = 'appSelfTest'):
 entities = {
     'SAL51': {
         'type': EntityType.LISTENER,
+        'actions': [
+            MuteAction('appListener', mute_type='1'),
+        ],
     },
     'SAL100': {
         'type': EntityType.LISTENER,
+        'actions': [
+            MuteAction('appListener', mute_type='1'),
+        ],
     },
     'SBS10': {
         'type': EntityType.BASESTATION,
@@ -86,6 +100,9 @@ entities = {
     },
     'SC01-MR': {
         'type': EntityType.COMBI,
+        'actions': [
+            MuteAction('appSc07mrMute', mute_type='1'),
+        ],
     },
     'SC06-WX': {
         'identifier': lambda entity: f'SC06-WX-{entity.sn}',
@@ -98,26 +115,41 @@ entities = {
         'identifier': lambda entity: f'SC07-MR-{entity.sn}',
         'type': EntityType.COMBI,
         'actions': [
+            MuteAction('appSc07mrMute', mute_type='1'),
         ]
     },
     'SC07-WX': {
         'identifier': lambda entity: f'SC07-WX-{entity.sn}',
         'type': EntityType.COMBI,
         'actions': [
-            MuteAction('1')
+            MuteAction(mute_type='1')
         ]
     },
     'SD11-MR': {
         'type': EntityType.SMOKE,
+        'actions': [
+            TestAction(),
+        ],
     },
     'SD19-MN': {
         'type': EntityType.SMOKE,
+        'actions': [
+            TestAction(),
+        ],
     },
     'SD19-MR': {
         'type': EntityType.SMOKE,
     },
     'SDA51': {
         'type': EntityType.ALARM,
+        'actions': [
+            {
+                'action': 'mute',
+                'topic': '2nd_appdriveway',
+                'shadow': 'appDriveway',
+                'data': {'mute': '1'}
+            },
+        ],
     },
     'SDS0A': {
         'type': EntityType.DOOR,
@@ -130,6 +162,9 @@ entities = {
     },
     'SK0Z-3S': {
         'type': EntityType.SMOKE,
+        'actions': [
+            TestAction(),
+        ],
     },
     'SKP01': {
         'type': EntityType.KEYPAD,
@@ -167,14 +202,14 @@ entities = {
         'type': EntityType.TEMPERATURE,
         'actions': [
             TestAction('thSelfTest'),
-            MuteAction('1', 'extendMute')
+            MuteAction('extendMute', '2nd_appmute', extra={'type': 'STH0A'}, mute_type='1')
         ],
     },
     'STH0B': {
         'type': EntityType.TEMPERATURE,
         'actions': [
             TestAction('thSelfTest'),
-            MuteAction('1', 'extendMute')
+            MuteAction('extendMute', '2nd_appmute', extra={'type': 'STH0B'}, mute_type='1')
         ],
     },
     'STH0C': {
@@ -184,7 +219,7 @@ entities = {
         'type': EntityType.TEMPERATURE,
         'actions': [
             TestAction('thSelfTest'),
-            MuteAction('1', 'extendMute')
+            MuteAction('extendMute', '2nd_appmute', extra={'type': 'STH51'}, mute_type='1')
         ],
     },
     'SWL51': {
@@ -200,7 +235,7 @@ entities = {
         'type': EntityType.WATER,
         'actions': [
             TestAction('waterSelfTest'),
-            MuteAction(shadow='appWater', topic='2nd_appwater', extra={'silencetime': '', 'setType': '0'})
+            MuteAction(shadow='appWater', topic='2nd_appwater', extra={'silenceTime': '', 'setType': '0'})
         ],
     },
     'CB0Z-3S': {
@@ -208,6 +243,9 @@ entities = {
     },
     'LP/N-SA-0B': {
         'type': EntityType.SMOKE,
+        'actions': [
+            TestAction(),
+        ],
     },
     'LP/N-SCA-0A': {
         'type': EntityType.COMBI,
@@ -226,26 +264,28 @@ entities = {
         'type': EntityType.CO,
         'actions': [
             TestAction(shadow='appCoSelfTest'),
-            MuteAction('1', '"appCoMute')
+            MuteAction('appCoMute', mute_type='1')
         ]
     },
     'XC04-WX': {
         'identifier': lambda entity: f'XC04-WX-{entity.sn}',
         'type': EntityType.CO,
         'actions': [
-            MuteAction('1')
+            MuteAction(mute_type='1')
         ]
     },
     'XH02-M': {
         'type': EntityType.HEAT,
         'actions': [
             TestAction(shadow='appXh02mSelfTest'),
+            MuteAction('appXh02mMute', mute_type='1', extra={'userParam': 'source=1'}),
         ]
     },
     'XP0A-MR': {
         'type': EntityType.COMBI,
         'actions': [
             TestAction(shadow='app2ndSelfTest'),
+            MuteAction('appXp0amrMute', mute_type='1', extra={'userParam': 'source=1'}),
             FireDrillAction()
         ]
     },
@@ -275,7 +315,7 @@ entities = {
         'type': EntityType.SMOKE,
         'actions': [
             TestAction(),
-            MuteAction(),
+            MuteAction('app2ndMute', mute_type='1'),
             FireDrillAction(),
         ],
     },
@@ -291,6 +331,9 @@ entities = {
     },
     'XS0D-MR': {
         'type': EntityType.SMOKE,
+        'actions': [
+            TestAction(),
+        ],
     },
     'XS0D-MR61': {
         'type': EntityType.SMOKE,
@@ -306,6 +349,9 @@ entities = {
     },
     'XP0H-MR': {
         'type': EntityType.COMBI,
+        'actions': [
+            MuteAction('appSc07mrMute', mute_type='1'),
+        ],
     },
     'XP0H-iR': {
         'type': EntityType.COMBI,
@@ -315,6 +361,9 @@ entities = {
     },
     'XP0P-MR': {
         'type': EntityType.COMBI,
+        'actions': [
+            MuteAction('appSc07mrMute', mute_type='1'),
+        ],
     },
     'XS0B-iR': {
         'type': EntityType.SMOKE,
@@ -324,6 +373,10 @@ entities = {
     },
     'XS0F-PMA': {
         'type': EntityType.SMOKE,
+        'actions': [
+            TestAction(),
+            MuteAction('app2ndMute', mute_type='1'),
+        ],
     },
     'XS0R-iA': {
         'type': EntityType.SMOKE,
