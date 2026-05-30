@@ -230,11 +230,6 @@ class XSenseBase:
             if station := house.get_station_by_sn(sn):
                 station.set_data(i)
 
-    def has_action(self, entity: Entity, action: str):
-        if entity_def := entities.get(entity.type):
-            return any(a for a in entity_def.get('actions', []) if a.get('action') == action)
-        return False
-
     def _station_for_entity(self, entity: Entity) -> Station:
         station = getattr(entity, 'station', None)
         if station:
@@ -242,6 +237,30 @@ class XSenseBase:
         if isinstance(entity, Station):
             return entity
         raise XSenseError(f'Entity type {entity.type} has no station')
+
+    def _validate_volume(self, volume: int):
+        if not isinstance(volume, int):
+            raise XSenseError('Volume must be an integer')
+        if volume < 0 or volume > 100:
+            raise XSenseError('Volume must be between 0 and 100')
+
+    def build_config_state(self, entity: Entity, shadow: str, values: Dict):
+        station = self._station_for_entity(entity)
+        desired = {
+            "shadow": shadow,
+            "stationSN": station.sn,
+            **values
+        }
+
+        if not isinstance(entity, Station):
+            desired["deviceSN"] = entity.sn
+
+        return station, {"state": {"desired": desired}}
+
+    def has_action(self, entity: Entity, action: str):
+        if entity_def := entities.get(entity.type):
+            return any(a for a in entity_def.get('actions', []) if a.get('action') == action)
+        return False
 
     def build_desired_state(self, entity: Entity, shadow: str, definition: Dict):
         station = self._station_for_entity(entity)

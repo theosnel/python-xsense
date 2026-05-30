@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 
 import requests
 
@@ -225,6 +225,25 @@ class XSense(XSenseBase):
         station, data = self.build_desired_state(entity, shadow, definition)
 
         return self.do_thing(station, topic, data)
+
+    def set_alarm_volume(self, entity: Entity, volume: int, alarm_tone: Optional[str]=None, mute: Optional[str]=None):
+        self._validate_volume(volume)
+        values = {
+            "alarmVol": str(volume),
+        }
+        if alarm_tone is not None:
+            values["alarmTone"] = alarm_tone
+        if mute is not None:
+            values["mute"] = mute
+
+        shadow = "infoBase" if isinstance(entity, Station) else "infoDev"
+        station, data = self.build_config_state(entity, shadow, values)
+        return self.do_thing(station, f'2nd_cfg_{entity.sn}', data)
+
+    def set_voice_volume(self, station: Station, volume: int):
+        self._validate_volume(volume)
+        station, data = self.build_config_state(station, "infoBase", {"voiceVol": str(volume)})
+        return self.do_thing(station, f'2nd_cfg_{station.sn}', data)
 
     def action(self, entity: Entity, action: str):
         entity_def = entities.get(entity.type)

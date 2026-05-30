@@ -47,6 +47,7 @@ property_mapper = {
 }
 
 type_mapping = {
+    'alarmVol': int,
     'batInfo': int,
     'rfLevel': int,
     'alarmStatus': map_bool,
@@ -58,6 +59,7 @@ type_mapping = {
     'isLifeEnd': map_bool,
     'isOpen': map_bool,
     'activate': map_bool,
+    'voiceVol': int,
     'temperature': float,
     'humidity': float
 }
