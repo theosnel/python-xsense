@@ -11,7 +11,7 @@ from pycognito import AWSSRP
 
 from .entity import Entity
 from .entity_map import entities
-from .exceptions import AuthFailed
+from .exceptions import AuthFailed, XSenseError
 from .station import Station
 from .house import House
 
@@ -234,3 +234,29 @@ class XSenseBase:
         if entity_def := entities.get(entity.type):
             return any(a for a in entity_def.get('actions', []) if a.get('action') == action)
         return False
+
+    def _station_for_entity(self, entity: Entity) -> Station:
+        station = getattr(entity, 'station', None)
+        if station:
+            return station
+        if isinstance(entity, Station):
+            return entity
+        raise XSenseError(f'Entity type {entity.type} has no station')
+
+    def build_desired_state(self, entity: Entity, shadow: str, definition: Dict):
+        station = self._station_for_entity(entity)
+        t = datetime.now(timezone.utc)
+        timestamp = t.strftime('%Y%m%d%H%M%S')
+
+        desired = {
+            "shadow": shadow,
+            "stationSN": station.sn,
+            "time": timestamp,
+            "userId": self.userid
+        }
+        if not isinstance(entity, Station):
+            desired["deviceSN"] = entity.sn
+        desired.update(definition.get('extra', {}))
+        desired.update(definition.get('data', {}))
+
+        return station, {"state": {"desired": desired}}

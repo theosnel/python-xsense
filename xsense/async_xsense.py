@@ -246,22 +246,9 @@ class AsyncXSense(XSenseBase):
             raise APIFailure(f'Unable to retrieve station data: {self._lastres.status}/{text}')
 
     async def set_state(self, entity: Entity, shadow: str, topic: str, definition: Dict):
-        station = entity.station
-        t = datetime.now()
-        timestamp = t.strftime('%Y%m%d%H%M%S')
+        station, data = self.build_desired_state(entity, shadow, definition)
 
-        desired = {
-            "deviceSN": entity.sn,
-            "shadow": shadow,
-            "stationSN": station.sn,
-            "time": timestamp,
-            "userId": self.userid
-        }
-        desired.update(definition.get('extra', {}))
-
-        data = {"state": {"desired": desired}}
-
-        res = await self.do_thing(station, topic, data)
+        return await self.do_thing(station, topic, data)
 
     async def action(self, entity: Entity, action: str):
         entity_def = entities.get(entity.type)
@@ -275,4 +262,4 @@ class AsyncXSense(XSenseBase):
         topic = action_def.get('topic')
         if callable(topic):
             topic = topic(entity)
-        await self.set_state(entity, action_def['shadow'], topic, action_def)
+        return await self.set_state(entity, action_def['shadow'], topic, action_def)
