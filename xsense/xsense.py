@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict
 
 import requests
@@ -222,22 +222,9 @@ class XSense(XSenseBase):
             raise APIFailure(f'Unable to retrieve station data: {self._lastres.status_code}/{self._lastres.text}')
 
     def set_state(self, entity: Entity, shadow: str, topic: str, definition: Dict):
-        station = entity.station
-        t = datetime.now()
-        timestamp = t.strftime('%Y%m%d%H%M%S')
+        station, data = self.build_desired_state(entity, shadow, definition)
 
-        desired = {
-            "deviceSN": entity.sn,
-            "shadow": shadow,
-            "stationSN": station.sn,
-            "time": timestamp,
-            "userId": self.userid
-        }
-        desired.update(definition.get('extra', {}))
-
-        data = {"state": {"desired": desired}}
-
-        res = self.do_thing(station, topic, data)
+        return self.do_thing(station, topic, data)
 
     def action(self, entity: Entity, action: str):
         entity_def = entities.get(entity.type)
@@ -251,4 +238,4 @@ class XSense(XSenseBase):
         topic = action_def.get('topic')
         if callable(topic):
             topic = topic(entity)
-        self.set_state(entity, action_def['shadow'], topic, action_def)
+        return self.set_state(entity, action_def['shadow'], topic, action_def)

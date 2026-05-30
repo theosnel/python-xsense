@@ -62,6 +62,9 @@ class Station(Entity):
             if v := values.get(k):
                 self._alarm_data[k] = v
 
+        if safe_mode := values.get('safeMode'):
+            self.safe_mode = safe_mode
+
     @property
     def alarm_data(self):
         return self._alarm_data
