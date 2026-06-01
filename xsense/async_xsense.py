@@ -1,7 +1,7 @@
 import asyncio
 from datetime import datetime
 import json
-from typing import Dict
+from typing import Dict, Optional
 
 import aiohttp
 
@@ -210,6 +210,115 @@ class AsyncXSense(XSenseBase):
             'utctimestamp': "0"
         }
         return await self.api_call("103007", **params)
+
+    async def get_history(self, houseId: str, dayTime: str, timeZone: str, nextToken: Optional[str] = None):
+        params = {
+            'houseId': houseId,
+            'dayTime': dayTime,
+            'timeZone': timeZone,
+        }
+        if nextToken:
+            params['nextToken'] = nextToken
+        return await self.api_call("104001", **params)
+
+    async def get_history_month(self, houseId: str, hisMonth: str, timeZone: str):
+        params = {
+            'houseId': houseId,
+            'hisMonth': hisMonth,
+            'timeZone': timeZone,
+        }
+        return await self.api_call("104006", **params)
+
+    async def get_station_history(
+        self,
+        houseId: str,
+        stationId: str,
+        dayTime: str,
+        timeZone: str,
+        deviceId: Optional[str] = None,
+        nextToken: Optional[str] = None,
+    ):
+        params = {
+            'houseId': houseId,
+            'dayTime': dayTime,
+            'timeZone': timeZone,
+            'stationId': stationId,
+        }
+        if deviceId:
+            params['deviceId'] = deviceId
+        if nextToken:
+            params['nextToken'] = nextToken
+        return await self.api_call("104007", **params)
+
+    async def get_station_history_month(
+        self,
+        houseId: str,
+        stationId: str,
+        deviceId: str,
+        hisMonth: str,
+        timeZone: str,
+    ):
+        params = {
+            'houseId': houseId,
+            'hisMonth': hisMonth,
+            'timeZone': timeZone,
+            'stationId': stationId,
+            'deviceId': deviceId,
+        }
+        return await self.api_call("104008", **params)
+
+    async def get_security_history(self, serverId: str, nextToken: Optional[str] = None):
+        params = {
+            'serverId': serverId,
+        }
+        if nextToken:
+            params['nextToken'] = nextToken
+        return await self.api_call("505001", **params)
+
+    async def get_sth_history(
+        self,
+        houseId: str,
+        stationId: str,
+        lastTime: str = "",
+        nextToken: Optional[str] = None,
+    ):
+        params = {
+            'houseId': houseId,
+            'stationId': stationId,
+            'lastTime': lastTime,
+        }
+        if nextToken:
+            params['nextToken'] = nextToken
+        return await self.api_call("104020", **params)
+
+    async def get_co_ppm_history(self, stationId: str, timeZone: str, deviceId: Optional[str] = None):
+        params = {
+            'stationId': stationId,
+            'timeZone': timeZone,
+        }
+        if deviceId:
+            params['deviceId'] = deviceId
+            return await self.api_call("104009", **params)
+        return await self.api_call("104014", **params)
+
+    async def get_co_ppm_history_details(
+        self,
+        houseId: str,
+        stationId: str,
+        dayTime: str,
+        timeZone: str,
+        deviceId: Optional[str] = None,
+    ):
+        params = {
+            'houseId': houseId,
+            'stationId': stationId,
+            'dayTime': dayTime,
+            'timeZone': timeZone,
+        }
+        if deviceId:
+            params['deviceId'] = deviceId
+            return await self.api_call("104010", **params)
+        return await self.api_call("104015", **params)
 
     async def get_house_state(self, house: House):
         for page in ('mainpage', '2nd_mainpage'):
