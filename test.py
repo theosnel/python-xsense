@@ -21,6 +21,9 @@ for _, h in api.houses.items():
             api.get_station_state(s)
             api.get_state(s)
 
+            if s.has_alarm:
+                api.get_alarm_state(s)
+
             for _, d in s.devices.items():
                 with suppress(NotFoundError):
                     res = api.get_station_state(s)

@@ -202,6 +202,14 @@ class AsyncXSense(XSenseBase):
             #     text = await self._lastres.text()
             #     raise APIFailure(f'Unable to retrieve house data: {self._lastres.status}/{text}')
 
+    async def get_alarm_state(self, station: Station):
+        res = await self.get_thing(station, '2nd_safemode')
+        if self._lastres.status == 404:
+            return
+
+        if 'reported' in res.get('state', {}):
+            station.set_alarm_data(res['state']['reported'])
+
     async def get_station_state(self, station: Station):
         res = None
 

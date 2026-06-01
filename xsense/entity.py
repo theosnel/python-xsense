@@ -1,3 +1,4 @@
+from xsense.entity_map import entities
 from xsense.mapping import map_values
 
 
@@ -5,6 +6,7 @@ class Entity:
     online = None
     type = None
     _data = None
+    entity_type = None
 
     def __init__(
             self,
@@ -12,6 +14,9 @@ class Entity:
     ):
         self.room_id = kwargs.get('roomId')
         self._data = {}
+
+        entity = entities.get(self.type, {})
+        self.entity_type = entity.get('type')
 
     def set_data(self, values: dict):
         data = values.copy()

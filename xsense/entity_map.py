@@ -5,10 +5,11 @@ from typing import Callable, Dict
 class EntityType(Enum):
     ALARM = 'alarm'
     BASE = "base"
+    BASESTATION = 'station'
     CO = "co"
     COMBI = 'combi'
     DOOR = 'door'
-    HEAT = 'heath'
+    HEAT = 'heat'
     KEYPAD = 'keypad'
     MAILBOX = 'mailbox'
     MOTION = 'motion'
@@ -58,10 +59,10 @@ entities = {
     'SAL51': {}, # listener
     'SAL100': {}, # listener
     'SBS10': {
-        'type': EntityType.BASE,
+        'type': EntityType.BASESTATION,
     },
     'SBS50': {
-        'type': EntityType.BASE,
+        'type': EntityType.BASESTATION,
         'identifier': lambda entity: f'SBS50{entity.sn}',
     },
     # SSC0A - Camera
@@ -72,6 +73,12 @@ entities = {
         'actions': [
             TestAction(),
         ],
+    },
+    'SC07-MR': {
+        'identifier': lambda entity: f'SC07-MR-{entity.sn}',
+        'type': EntityType.COMBI,
+        'actions': [
+        ]
     },
     'SC07-WX': {
         'identifier': lambda entity: f'SC07-WX-{entity.sn}',
@@ -106,6 +113,20 @@ entities = {
     # 'SSD01': {},
     # 'SPL51': {},
     # 'SSL51': {},
+    'STH0A': {
+        'type': EntityType.TEMPERATURE,
+        'actions': [
+            TestAction('thSelfTest'),
+            MuteAction('1', 'extendMute')
+        ],
+    },
+    'STH0B': {
+        'type': EntityType.TEMPERATURE,
+        'actions': [
+            TestAction('thSelfTest'),
+            MuteAction('1', 'extendMute')
+        ],
+    },
     'STH51': {
         'type': EntityType.TEMPERATURE,
         'actions': [
@@ -142,6 +163,7 @@ entities = {
     'XH02-M': {
         'type': EntityType.HEAT,
         'actions': [
+            TestAction(shadow='appXh02mSelfTest'),
         ]
     },
     'XP0A-MR': {
@@ -168,6 +190,14 @@ entities = {
         'type': EntityType.SMOKE,
         'actions': [
             TestAction(),
+        ],
+    },
+    'XS0B-MR': {
+        'type': EntityType.SMOKE,
+        'actions': [
+            TestAction(),
+            MuteAction(),
+            FireDrillAction(),
         ],
     },
     'XS03-iWX': {
