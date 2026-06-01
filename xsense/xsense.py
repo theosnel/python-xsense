@@ -13,6 +13,21 @@ from xsense.station import Station
 
 
 class XSense(XSenseBase):
+    def __init__(self, session=None):
+        super().__init__()
+        self.session = session or requests.Session()
+        self._owns_session = session is None
+
+    def close(self):
+        if self._owns_session:
+            self.session.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        self.close()
+
     def api_call(self, code, unauth=False, **kwargs):
         data = {
             **kwargs
@@ -27,7 +42,7 @@ class XSense(XSenseBase):
             headers = {'Authorization': self.access_token}
             mac = self._calculate_mac(data)
 
-        res = requests.post(
+        res = self.session.post(
             f'{self.API}/app',
             json={
                 **data,
@@ -62,7 +77,7 @@ class XSense(XSenseBase):
             self.load_aws()
 
         url, headers = self._house_request(house, page)
-        res = requests.get(url, headers=headers)
+        res = self.session.get(url, headers=headers)
         self._lastres = res
         return res.json()
 
@@ -71,7 +86,7 @@ class XSense(XSenseBase):
             self.load_aws()
 
         url, headers = self._thing_request(station, page)
-        res = requests.get(url, headers=headers)
+        res = self.session.get(url, headers=headers)
         self._lastres = res
         return res.json()
 
@@ -80,7 +95,7 @@ class XSense(XSenseBase):
             self.load_aws()
 
         url, headers = self._thing_request(station, page, data)
-        res = requests.post(url, headers=headers, json=data)
+        res = self.session.post(url, headers=headers, json=data)
         self._lastres = res
         return res.json()
 
@@ -91,7 +106,7 @@ class XSense(XSenseBase):
     def refresh(self):
         url, data, headers = self._refresh_request()
 
-        res = requests.post(
+        res = self.session.post(
             url,
             json=data,
             headers=headers
