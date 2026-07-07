@@ -448,6 +448,73 @@ def test_station_less_xs01_wx_action_uses_station_as_its_own_target():
     assert desired["muteType"] == "0"
 
 
+def test_station_less_xs01_wx_self_test_uses_legacy_second_gen_path():
+    house = House(None, "house-id", "Home", "US", "us-east-1", "mqtt.example")
+    station = Station(
+        house,
+        stationId="station-id",
+        stationSn="EN123",
+        stationName="Standalone Smoke",
+        category="XS01-WX",
+    )
+    client = RecordingClient()
+
+    asyncio.run(client.action(station, "test"))
+
+    target, topic, payload = client.do_thing_calls[0]
+    desired = payload["state"]["desired"]
+    assert target is station
+    assert topic == "2nd_selftest_EN123"
+    assert desired["deviceSN"] == "EN123"
+    assert desired["stationSN"] == "EN123"
+    assert desired["shadow"] == "appSelfTest"
+
+
+def test_sc06_wx_self_test_uses_legacy_second_gen_path():
+    house = House(None, "house-id", "Home", "US", "us-east-1", "mqtt.example")
+    station = Station(
+        house,
+        stationId="station-id",
+        stationSn="SC06123",
+        stationName="Combo",
+        category="SC06-WX",
+    )
+    client = RecordingClient()
+
+    asyncio.run(client.action(station, "test"))
+
+    target, topic, payload = client.do_thing_calls[0]
+    desired = payload["state"]["desired"]
+    assert target is station
+    assert topic == "2nd_selftest_SC06123"
+    assert desired["deviceSN"] == "SC06123"
+    assert desired["stationSN"] == "SC06123"
+    assert desired["shadow"] == "appSelfTest"
+
+
+def test_xs0b_ir_self_test_uses_standalone_appselftest_path():
+    house = House(None, "house-id", "Home", "US", "us-east-1", "mqtt.example")
+    station = Station(
+        house,
+        stationId="station-id",
+        stationSn="XS0B123",
+        stationName="Smoke",
+        category="XS0B-iR",
+    )
+    client = RecordingClient()
+
+    asyncio.run(client.action(station, "test"))
+
+    target, topic, payload = client.do_thing_calls[0]
+    desired = payload["state"]["desired"]
+    assert target is station
+    assert topic == "appselftest_XS0B123"
+    assert desired["deviceSN"] == "XS0B123"
+    assert desired["stationSN"] == "XS0B123"
+    assert desired["shadow"] == "appSelfTest"
+    assert "time" not in desired
+
+
 def test_has_action_only_returns_true_for_known_resolvable_actions():
     house = House(None, "house-id", "Home", "US", "us-east-1", "mqtt.example")
     station = Station(
