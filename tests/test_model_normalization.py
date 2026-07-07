@@ -182,19 +182,29 @@ def test_station_set_devices_canonicalizes_child_identity_aliases():
                     "deviceType": "SDS0A",
                     "deviceName": "Door",
                 },
+                {
+                    "id": "alias-id",
+                    "serialNumber": "ALIAS123",
+                    "deviceType": "XS0B-MR",
+                    "deviceName": "Alias Sensor",
+                },
             ]
         }
     )
 
     smoke = station.get_device_by_sn("12345")
     door = station.get_device_by_sn("NO-ID123")
+    alias = station.get_device_by_sn("ALIAS123")
 
     assert smoke is not None
     assert smoke.sn == "12345"
     assert smoke.type == "XS01-M"
     assert door is not None
+    assert alias is not None
+    assert alias.entity_id == "alias-id"
+    assert alias.sn == "ALIAS123"
     assert station.get_device_by_sn(12345) is smoke
-    assert len(station.devices) == 2
+    assert len(station.devices) == 3
 
 
 def test_parse_get_state_routes_child_shadow_payloads():
