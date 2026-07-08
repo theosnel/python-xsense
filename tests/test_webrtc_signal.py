@@ -1,11 +1,14 @@
+import asyncio
 import base64
 import json
 import time
+from types import SimpleNamespace
 
 from xsense.webrtc_signal import (
     SIGNAL_MODE,
     SIGNAL_VIEWER_TYPE,
     XSenseWebRTCTicket,
+    XSenseWebRTCSignalSession,
     make_ice_candidate_payload,
     make_sdp_offer_payload,
     parse_signal_message,
@@ -168,3 +171,52 @@ def test_parse_signal_message_decodes_encoded_peer_payload():
 
     assert event == "PEER_IN"
     assert payload == {"clientId": "CAM123"}
+
+
+def test_trickled_candidate_is_queued_until_answer_is_received():
+    async def run_test():
+        class FakeWs:
+            closed = False
+
+            def __init__(self):
+                self.messages = []
+
+            async def send_str(self, message):
+                self.messages.append(json.loads(message))
+
+        session = XSenseWebRTCSignalSession(
+            session=object(),
+            ticket=_ticket(),
+            offer_sdp="v=0\r\n",
+            resolution="1920x1080",
+            camera_online=True,
+        )
+        candidate = SimpleNamespace(
+            candidate="candidate:1 1 udp 1 192.0.2.1 123 typ host",
+            sdp_mid="0",
+            sdp_m_line_index=0,
+        )
+
+        await session.add_candidate(candidate)
+
+        assert len(session._pending_remote_candidates) == 1
+
+        session._ws = FakeWs()
+        session._offer_sent = True
+
+        await session.add_candidate(candidate)
+
+        assert len(session._pending_remote_candidates) == 2
+        assert session._ws.messages == []
+
+        session._answer.set_result("v=0\r\n")
+        await session._flush_pending_remote_candidates()
+
+        assert session._pending_remote_candidates == []
+        assert [message["messageType"] for message in session._ws.messages] == [
+            "ICE_CANDIDATE",
+            "ICE_CANDIDATE",
+        ]
+        assert session._sent_candidate_count == 2
+
+    asyncio.run(run_test())
