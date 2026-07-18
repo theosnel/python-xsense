@@ -75,6 +75,13 @@ SELF_TEST_TIME_KEYS = (
     "time",
 )
 
+SELF_TEST_FAULT_KEYS = (
+    "selfTestCoFault",
+    "selfTestLifeEnd",
+    "selfTestLowPower",
+    "selfTestSmokeFault",
+)
+
 __all__ = [
     "APK_AI_DETECTION_DATA_KEYS",
     "APK_AI_DETECTION_GROUPS",
@@ -88,9 +95,12 @@ __all__ = [
     "apply_apk_event_aliases",
     "camera_ai_history_event_key",
     "camera_event_history_event_key",
+    "camera_event_history_playback_data",
+    "camera_event_history_playback_source",
     "camera_event_history_records",
     "camera_event_history_station_data",
     "camera_event_history_time",
+    "camera_playback_epoch_seconds",
     "latest_apk_detection_time",
     "is_self_test_topic",
     "is_presence_topic",
@@ -100,6 +110,7 @@ __all__ = [
     "mqtt_topic_kind",
     "normalize_self_test_report",
     "normalize_self_test_result",
+    "self_test_report_payload",
     "SELF_TEST_RESULT_KEYS",
     "SELF_TEST_TIME_KEYS",
 ]
@@ -220,6 +231,7 @@ def is_self_test_topic(topic: str) -> bool:
         marker in topic
         for marker in (
             "_testup/update",
+            "alarmtestup/update",
             "selftestup/update",
             "selftestup_v2/update",
         )
@@ -228,17 +240,44 @@ def is_self_test_topic(topic: str) -> bool:
 
 def normalize_self_test_report(data: dict[str, Any]) -> None:
     """Normalize APK self-test report fields into reusable state keys."""
+    report = self_test_report_payload(data)
+    target = report if report is not data else data
     for key in SELF_TEST_RESULT_KEYS:
-        value = data.get(key)
+        value = report.get(key)
         if value not in (None, ""):
-            data["lastSelfTest"] = normalize_self_test_result(value)
+            target["lastSelfTest"] = normalize_self_test_result(value)
             break
+    else:
+        fault_values = [report.get(key) for key in SELF_TEST_FAULT_KEYS]
+        if any(value not in (None, "") for value in fault_values):
+            target["lastSelfTest"] = (
+                "1"
+                if any(is_truthy_self_test_fault(value) for value in fault_values)
+                else "0"
+            )
 
     for key in SELF_TEST_TIME_KEYS:
-        value = data.get(key)
+        value = report.get(key)
         if value not in (None, ""):
-            data["lastSelfTestTime"] = value
+            target["lastSelfTestTime"] = value
             break
+
+    for key in ("stationSN", "deviceSN", "userId"):
+        value = report.get(key)
+        if value not in (None, ""):
+            target.setdefault(key, value)
+
+
+def self_test_report_payload(data: dict[str, Any]) -> dict[str, Any]:
+    """Return the APK SmokeCheckSelfUpShadowBean-style payload."""
+    if any(key in data for key in SELF_TEST_RESULT_KEYS):
+        return data
+    for value in data.values():
+        if isinstance(value, dict) and any(
+            key in value for key in (*SELF_TEST_RESULT_KEYS, *SELF_TEST_FAULT_KEYS)
+        ):
+            return value
+    return data
 
 
 def normalize_self_test_result(value: Any) -> Any:
@@ -250,6 +289,13 @@ def normalize_self_test_result(value: Any) -> Any:
         if normalized in {"fail", "failed", "failure", "error"}:
             return "1"
     return value
+
+
+def is_truthy_self_test_fault(value: Any) -> bool:
+    """Return whether an APK DeviceTestV2 fault flag is set."""
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "fault", "failed"}
+    return value is True or value == 1
 
 
 def camera_ai_history_event_key(server_id: str, alarm_item: dict[str, Any]) -> str:
@@ -312,8 +358,72 @@ def camera_event_history_station_data(record: dict[str, Any]) -> dict[str, Any]:
         data["time"] = event_time
         data["eventTime"] = event_time
 
+    if playback := camera_event_history_playback_data(record):
+        data["playback"] = playback
+
     apply_apk_event_aliases(data)
     return data
+
+
+def camera_event_history_playback_data(record: dict[str, Any]) -> dict[str, Any]:
+    """Return APK recording playback metadata from an ADDX history record."""
+    playback: dict[str, Any] = {}
+    for source_key, target_key in (
+        ("traceId", "trace_id"),
+        ("traceIds", "trace_ids"),
+        ("videoUrl", "video_url"),
+        ("imageUrl", "image_url"),
+        ("packageImageUrl", "package_image_url"),
+        ("multiResolutionVideos", "multi_resolution_videos"),
+        ("subVideos", "sub_videos"),
+        ("resolution", "resolution"),
+        ("resolutionInfo", "resolution_info"),
+        ("highFramerate", "high_framerate"),
+        ("startTime", "start_time"),
+        ("endTime", "end_time"),
+        ("timestamp", "timestamp"),
+        ("period", "period"),
+        ("fileSize", "file_size"),
+        ("videoEvent", "video_event"),
+        ("tags", "tags"),
+    ):
+        value = record.get(source_key)
+        if value not in (None, ""):
+            playback[target_key] = value
+
+    for raw_key, seconds_key in (
+        ("start_time", "start_time_s"),
+        ("end_time", "end_time_s"),
+        ("timestamp", "timestamp_s"),
+    ):
+        seconds = camera_playback_epoch_seconds(playback.get(raw_key))
+        if seconds is not None:
+            playback[seconds_key] = seconds
+
+    playback_source = camera_event_history_playback_source(record)
+    if playback_source:
+        playback["source"] = playback_source
+    return playback
+
+
+def camera_playback_epoch_seconds(value: Any) -> int | None:
+    """Return epoch seconds for APK playback values that may be ms or seconds."""
+    if value in (None, ""):
+        return None
+    try:
+        timestamp = int(value)
+    except (TypeError, ValueError):
+        return None
+    if timestamp > 10_000_000_000:
+        timestamp //= 1000
+    return timestamp
+
+
+def camera_event_history_playback_source(record: dict[str, Any]) -> str | None:
+    """Return how the APK can play a camera history record."""
+    if record.get("videoUrl"):
+        return "video_url"
+    return None
 
 
 def camera_event_history_time(value: Any) -> str | None:

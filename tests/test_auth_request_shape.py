@@ -132,8 +132,8 @@ def test_async_app_call_uses_current_app_metadata_and_mac():
     assert call["headers"] == {"Authorization": "access-token"}
     assert call["json"]["userId"] == "user-id-code"
     assert call["json"]["bizCode"] == "701001"
-    assert call["json"]["appCode"] == "1360"
-    assert call["json"]["appVersion"] == "v1.36.0_20260130"
+    assert call["json"]["appCode"] == "1400"
+    assert call["json"]["appVersion"] == "v1.40.0_20260612"
     assert call["json"]["clientType"] == "2"
     assert call["json"]["mac"] == client._calculate_mac({"userId": "user-id-code"})
 
@@ -643,8 +643,8 @@ def test_ipc_call_uses_current_app_metadata():
     assert call["json"]["nodeType"] == "US"
     assert call["json"]["language"] == "en"
     assert call["json"]["bizCode"] == "C10101"
-    assert call["json"]["appCode"] == "1360"
-    assert call["json"]["appVersion"] == "v1.36.0_20260130"
+    assert call["json"]["appCode"] == "1400"
+    assert call["json"]["appVersion"] == "v1.40.0_20260612"
     assert call["json"]["clientType"] == "2"
 
 

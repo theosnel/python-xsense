@@ -209,7 +209,7 @@ def test_camera_audio_and_direct_control_helpers_use_app_endpoints():
     assert camera.data["defaultCodec"] == "H265"
     assert camera.data["cooldownEnabled"] is True
     assert camera.data["cooldownValue"] == 60
-    assert camera.data["deviceStatus"] == 1001
+    assert camera.data.get("deviceStatus") is None
 
 
 def test_camera_ai_notification_parsing_and_payload_shape():

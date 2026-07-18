@@ -43,9 +43,9 @@ See below
 
 Clienttype: 1 for IOS, 2 for Android.
 
-App-version currently is "v1.36.0_20260130".
+App-version currently is "v1.40.0_20260612".
 
-AppCode looks like an encoded version of the App-version and is currently 1360 (v **1** . **36** . **0** _20260130)
+AppCode looks like an encoded version of the App-version and is currently 1400 (v **1** . **40** . **0** _20260612)
 
 The bizCode specifies which command is requested.
 
