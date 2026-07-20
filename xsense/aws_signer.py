@@ -87,7 +87,7 @@ class AWSSigner:
 
         # calculate content hash
         if content:
-            if isinstance(content, Dict):
+            if isinstance(content, dict):
                 content = json.dumps(content, sort_keys=True)
 
             content_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
