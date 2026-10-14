@@ -1,7 +1,7 @@
 import argparse
 import contextlib
 
-from xsense.base import XSenseBase
+from .base import XSenseBase
 
 
 def get_credentials():
@@ -13,6 +13,8 @@ def get_credentials():
     if args.username and args.password:
         return args.username, args.password
 
+    username = None
+    password = None
     with contextlib.suppress(FileNotFoundError):
         with open('.env', 'r') as file:
             for line in file:

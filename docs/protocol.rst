@@ -43,9 +43,9 @@ See below
 
 Clienttype: 1 for IOS, 2 for Android.
 
-App-version currently is "v1.17.2_20240115".
+App-version currently is "v1.40.0_20260612".
 
-AppCode looks like an encoded version of the App-version and is currenlty 1172 (v **1** . **17** . **2** _20240115)
+AppCode looks like an encoded version of the App-version and is currently 1400 (v **1** . **40** . **0** _20260612)
 
 The bizCode specifies which command is requested.
 
@@ -57,10 +57,8 @@ Some requests can be unauthenticated, other must be authenticated. Authention ca
 
 MAC-hash
 --------
-All requests must include a MAC-hash. This is a md5-hash calculated over the values of all custom field included in the
-request combined with the secret key.
-The implementation for the hash-calculation is probably incorrect. Keys in a python-dict are unsorted which result
-in hashes that are unpredictable.
+All requests must include a MAC-hash. This is a md5-hash calculated over the values of all custom fields included in the
+request combined with the secret key. Container values are serialized in the compact JSON form used by the Android app.
 
 Commands
 ========
